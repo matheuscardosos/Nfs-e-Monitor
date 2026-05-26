@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+<title>NFS-e Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="renderer/styles.css">
+</head>
+<body>
+
+<div class="layout" style="height:100vh">
+
+  <!-- BARRA SUPERIOR -->
+  <div class="topbar">
+    <span class="topbar-logo">NFS-e Monitor</span>
+    <div class="topbar-sep"></div>
+    <div class="topbar-empresa" id="compWrap">
+      <button class="topbar-empresa-btn" id="compBtn" onclick="toggleDD()">
+        <div class="topbar-cert-dot none" id="compCertDot"></div>
+        <span class="topbar-empresa-name" id="compName">Selecione uma empresa</span>
+        <span class="topbar-empresa-cnpj" id="compCnpj"></span>
+        <span class="topbar-empresa-uf" id="compUf" style="display:none"></span>
+        <span class="topbar-chevron" id="chevron">&#9662;</span>
+      </button>
+      <div class="comp-dd" id="compDD"></div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-actions">
+      <button class="btn primary" id="btnSync" onclick="openSyncModal()" style="padding:4px 12px;font-size:12px">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M4.395 12.001a.75.75 0 011.5-.001 6.75 6.75 0 0112.82-2.207.75.75 0 011.442-.414l-.71 2.732-2.65-.732a.75.75 0 01.4-1.446l.001.001a5.25 5.25 0 00-9.903 1.766.75.75 0 01-1.5.001zm15.5 0a.75.75 0 01-1.5.001 6.75 6.75 0 01-12.82 2.207.75.75 0 01-1.442.414l.71-2.732 2.65.732a.75.75 0 01-.4 1.446l-.001-.001a5.25 5.25 0 009.903-1.766.75.75 0 011.5-.001z" fill="currentColor"/></svg>
+        Sincronizar
+      </button>
+      <button class="btn" id="btnSyncAll" onclick="openSyncAllModal()" style="padding:4px 12px;font-size:12px">
+        Sincronizar Todas
+      </button>
+    </div>
+  </div>
+
+  <!-- CORPO: sidebar + main -->
+  <div class="layout-body">
+
+  <!-- NAV (sidebar ocultavel) -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <svg class="nav-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="11" width="7" height="10" rx="1"/></svg>
+      <span class="nav-brand-text">Menu</span>
+    </div>
+    <div class="nav-group">
+      <div class="nav-item active" onclick="showPanel('dashboard',this)" data-p="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3H12H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H7.5M13.5 3L19 8.625M13.5 3V7.625C13.5 8.17728 13.9477 8.625 14.5 8.625H19M19 8.625V9.75V12V19C19 20.1046 18.1046 21 17 21H16.5"/><path d="M12 21L12 13M12 13L14.5 15.5M12 13L9.5 15.5"/></svg>
+        <span class="nav-item-label">NFS-e Emitidas</span>
+        <span class="nav-badge" id="navCount">0</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('recebidas',this)" data-p="recebidas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3H12H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H7.5M13.5 3L19 8.625M13.5 3V7.625C13.5 8.17728 13.9477 8.625 14.5 8.625H19M19 8.625V9.75V12V19C19 20.1046 18.1046 21 17 21H16.5"/><path d="M12 12V20M12 20L9.5 17.5M12 20L14.5 17.5"/></svg>
+        <span class="nav-item-label">NFS-e Tomadas</span>
+        <span class="nav-badge" id="navCountRec">0</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('alertas',this)" data-p="alertas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="nav-item-label">Alertas</span>
+        <span class="nav-badge alert-badge" id="navAlertCount">0</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('relatorio',this)" data-p="relatorio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span class="nav-item-label">Competencias</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('empresas',this)" data-p="empresas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+        <span class="nav-item-label">Empresas</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('config',this)" data-p="config">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span class="nav-item-label">Configuracoes</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PRINCIPAL -->
+  <main class="main">
+    <!-- BARRA DE PROGRESSO SUPERIOR -->
+    <div id="topSyncBar" class="top-sync-bar hidden">
+      <div class="top-sync-inner">
+        <div class="top-sync-progress" id="topSyncProgress" style="width:0%"></div>
+      </div>
+      <span class="top-sync-text" id="topSyncText">Sincronizando...</span>
+      <button class="top-sync-close" onclick="hideTopSync()">&times;</button>
+    </div>
+    <div class="content" id="mainContent">
+
+      <!-- DASHBOARD (NFS-e Emitidas da empresa ativa) -->
+      <div id="pDashboard">
+        <div class="ph">
+          <div>
+            <h2>NFS-e Emitidas</h2>
+            <div class="ph-sub" id="dashSub">Notas da empresa ativa</div>
+          </div>
+        </div>
+
+        <div id="certAlert" class="alert danger hidden">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8.982 1.566a1.13 1.13 0 00-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 01-1.1 0L7.1 5.995A.905.905 0 018 5zm.002 6a1 1 0 110 2 1 1 0 010-2z"/></svg>
+          <span id="certAlertMsg">Certificado vencido</span>
+        </div>
+
+        <!-- Barra de ferramentas -->
+        <div class="toolbar" style="margin-bottom:16px">
+          <span class="tb-label">Filtrar por:</span>
+          <select class="input" id="fTipo" onchange="onFilterTypeChange()" style="width:130px">
+            <option value="competencia">Competencia</option>
+            <option value="emissao">Data Emissao</option>
+          </select>
+          <div id="calendarSlot" style="display:inline-block"></div>
+          <div class="tb-sep"></div>
+          <span class="tb-label">Status:</span>
+          <select class="input" id="fStatus" onchange="applyFilters()" style="width:130px">
+            <option value="todos">Todos</option>
+            <option value="Autorizada">Autorizada</option>
+            <option value="Cancelada">Cancelada</option>
+            <option value="Substituida">Substituida</option>
+          </select>
+          <div class="tb-sep"></div>
+          <input type="text" class="input" id="fSearch" placeholder="Buscar numero, tomador..." style="width:200px" oninput="filterTable()">
+          <div class="tb-spacer"></div>
+          <button class="btn primary" onclick="exportExcel()">
+            <img src="renderer/icons/relatorio-excel.svg" width="16" height="16" alt="Excel">
+            Gerar Relatorio
+          </button>
+          <button class="btn" onclick="downloadXmlZip()">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/><path d="M7.646 11.854a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L8.5 10.293V1.5a.5.5 0 00-1 0v8.793L5.354 8.146a.5.5 0 10-.708.708l3 3z"/></svg>
+            Baixar XMLs
+          </button>
+        </div>
+
+        <!-- Cards de estatisticas -->
+        <div class="stats" id="statsRow" style="margin-bottom:16px">
+          <div class="stat">
+            <div class="stat-body">
+              <div class="stat-label">NFS-e Emitidas</div>
+              <div class="stat-val" id="sTotal">0</div>
+              <div class="stat-sub" id="sTotalSub">Nenhuma nota</div>
+            </div>
+            <div class="stat-icon"><img src="renderer/icons/nfse-emitidas.svg" alt=""></div>
+          </div>
+          <div class="stat">
+            <div class="stat-body">
+              <div class="stat-label">Valor Total Servicos</div>
+              <div class="stat-val" id="sValor">R$ 0,00</div>
+              <div class="stat-sub" id="sValorSub">-</div>
+            </div>
+            <div class="stat-icon"><img src="renderer/icons/valor-total.svg" alt=""></div>
+          </div>
+          <div class="stat">
+            <div class="stat-body">
+              <div class="stat-label">Autorizadas</div>
+              <div class="stat-val" id="sOk">0</div>
+              <div class="stat-sub" id="sOkSub">-</div>
+            </div>
+            <div class="stat-icon"><img src="renderer/icons/autorizadas.svg" alt=""></div>
+          </div>
+          <div class="stat">
+            <div class="stat-body">
+              <div class="stat-label">Canceladas / Substituidas</div>
+              <div class="stat-val" id="sCanc">0</div>
+              <div class="stat-sub" id="sCancSub">-</div>
+            </div>
+            <div class="stat-icon"><img src="renderer/icons/canceladas.svg" alt=""></div>
+          </div>
+        </div>
+
+        <!-- Tabela de notas -->
+        <div class="tcard">
+          <div class="tcard-head">
+            <span class="tcard-title">Notas Fiscais</span>
+            <span class="tcard-count" id="tCount">0 registros</span>
+          </div>
+          <div class="tcard-scroll">
+            <table>
+              <thead><tr>
+                <th>Emissao</th><th>Numero</th><th>Tomador</th><th>Municipio</th>
+                <th>Competencia</th><th>Valor Servico</th><th>Valor Liquido</th><th>Status</th><th></th>
+              </tr></thead>
+              <tbody id="tBody"></tbody>
+            </table>
+          </div>
+          <div class="tcard-foot" id="tFoot">
+            <div id="tPagination" style="display:flex;align-items:center;gap:8px">
+              <span id="tPageInfo">Nenhuma nota</span>
+              <button class="btn" id="tPrev" onclick="prevPage()" style="padding:2px 8px;font-size:11px" disabled>&laquo; Anterior</button>
+              <button class="btn" id="tNext" onclick="nextPage()" style="padding:2px 8px;font-size:11px" disabled>Proxima &raquo;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NFS-e TOMADAS (RECEBIDAS) -->
+      <div id="pRecebidas" class="hidden">
+        <div class="ph">
+          <div>
+            <h2>NFS-e Tomadas</h2>
+            <div class="ph-sub" id="dashRecSub">Notas recebidas da empresa ativa</div>
+          </div>
+        </div>
+
+        <div class="toolbar" style="margin-bottom:16px">
+          <span class="tb-label">Filtrar por:</span>
+          <select class="input" id="fTipoRec" onchange="onFilterTypeChangeRec()" style="width:130px">
+            <option value="competencia">Competencia</option>
+            <option value="emissao">Data Emissao</option>
+          </select>
+          <div id="calendarSlotRec" style="display:inline-block"></div>
+          <div class="tb-sep"></div>
+          <span class="tb-label">Status:</span>
+          <select class="input" id="fStatusRec" onchange="applyFiltersRec()" style="width:130px">
+            <option value="todos">Todos</option>
+            <option value="Autorizada">Autorizada</option>
+            <option value="Cancelada">Cancelada</option>
+            <option value="Substituida">Substituida</option>
+          </select>
+          <div class="tb-sep"></div>
+          <input type="text" class="input" id="fSearchRec" placeholder="Buscar numero, prestador..." style="width:200px" oninput="filterTableRec()">
+          <div class="tb-spacer"></div>
+          <button class="btn primary" onclick="exportExcelRec()">
+            <img src="renderer/icons/relatorio-excel.svg" width="16" height="16" alt="Excel">
+            Gerar Relatorio
+          </button>
+          <button class="btn" onclick="downloadXmlZipRec()">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/><path d="M7.646 11.854a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L8.5 10.293V1.5a.5.5 0 00-1 0v8.793L5.354 8.146a.5.5 0 10-.708.708l3 3z"/></svg>
+            Baixar XMLs
+          </button>
+        </div>
+
+        <div class="stats" id="statsRowRec" style="margin-bottom:16px">
+          <div class="stat">
+            <div class="stat-body">
+              <div class="stat-label">NFS-e Tomadas</div>
+              <div class="stat-val" id="sTotalRec">0</div>
+              <div class="stat-sub" id="sTotalSubRec">Nenhuma nota</div>
+            </div>
+            <div class="stat-icon"><img src="renderer/icons/nfse-emitidas.svg" alt=""></div>
+          </div>
+          <div class="stat">
+            <div class="stat-body">
+              <div class="stat-label">Valor Total Servicos</div>
+              <div class="stat-val" id="sValorRec">R$ 0,00</div>
+              <div class="stat-sub" id="sValorSubRec">-</div>
+            </div>
+            <div class="stat-icon"><img src="renderer/icons/valor-total.svg" alt=""></div>
+          </div>
+          <div class="stat">
+            <div class="stat-body">
+              <div class="stat-label">Autorizadas</div>
+              <div class="stat-val" id="sOkRec">0</div>
+              <div class="stat-sub" id="sOkSubRec">-</div>
+            </div>
+            <div class="stat-icon"><img src="renderer/icons/autorizadas.svg" alt=""></div>
+          </div>
+          <div class="stat">
+            <div class="stat-body">
+              <div class="stat-label">Canceladas / Substituidas</div>
+              <div class="stat-val" id="sCancRec">0</div>
+              <div class="stat-sub" id="sCancSubRec">-</div>
+            </div>
+            <div class="stat-icon"><img src="renderer/icons/canceladas.svg" alt=""></div>
+          </div>
+        </div>
+
+        <div class="tcard">
+          <div class="tcard-head">
+            <span class="tcard-title">Notas Tomadas</span>
+            <span class="tcard-count" id="tCountRec">0 registros</span>
+          </div>
+          <div class="tcard-scroll">
+            <table>
+              <thead><tr>
+                <th>Emissao</th><th>Numero</th><th>Prestador</th><th>Municipio</th>
+                <th>Competencia</th><th>Valor Servico</th><th>Valor Liquido</th><th>Status</th><th></th>
+              </tr></thead>
+              <tbody id="tBodyRec"></tbody>
+            </table>
+          </div>
+          <div class="tcard-foot" id="tFootRec">
+            <div id="tPaginationRec" style="display:flex;align-items:center;gap:8px">
+              <span id="tPageInfoRec">Nenhuma nota</span>
+              <button class="btn" id="tPrevRec" onclick="prevPageRec()" style="padding:2px 8px;font-size:11px" disabled>&laquo; Anterior</button>
+              <button class="btn" id="tNextRec" onclick="nextPageRec()" style="padding:2px 8px;font-size:11px" disabled>Proxima &raquo;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTAS -->
+      <div id="pAlertas" class="hidden">
+        <div class="ph">
+          <div>
+            <h2>Alertas</h2>
+            <div class="ph-sub">Notas emitidas no mes atual ou anterior referentes a competencia de mes diferente</div>
+          </div>
+          <button class="btn primary" onclick="exportAlertas()">
+            <img src="renderer/icons/relatorio-excel.svg" width="16" height="16" alt="Excel">
+            Gerar Relatorio
+          </button>
+        </div>
+        <div class="tcard">
+          <div class="tcard-head"><span class="tcard-title">Notas com Divergencia</span><span class="tcard-count" id="alertTCount">0 registros</span></div>
+          <div class="tcard-scroll">
+            <table>
+              <thead><tr>
+                <th>Empresa</th><th>Emissao</th><th>Numero</th><th>Tomador</th>
+                <th>Competencia</th><th>Valor Servico</th><th>Status</th><th>Divergencia</th>
+              </tr></thead>
+              <tbody id="alertTBody"></tbody>
+            </table>
+          </div>
+          <div class="tcard-foot" id="alertFoot">Nenhum alerta</div>
+        </div>
+      </div>
+
+      <!-- painel notas oculto, dashboard serve como NFS-e Emitidas -->
+      <div id="pNotas" class="hidden"></div>
+
+      <!-- PAINEL EMPRESAS -->
+      <div id="pEmpresas" class="hidden">
+        <div class="ph">
+          <div><h2>Empresas</h2><div class="ph-sub">Gerencie empresas e certificados</div></div>
+          <button class="btn primary" onclick="openEmpModal()">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5H2.75a.75.75 0 010-1.5h4.5V2.75A.75.75 0 018 2z"/></svg>
+            Nova Empresa
+          </button>
+        </div>
+        <div class="cgrid" id="empGrid"></div>
+      </div>
+
+      <!-- PAINEL COMPETENCIAS -->
+      <div id="pRelatorio" class="hidden">
+        <div class="ph">
+          <div><h2>Competencias</h2><div class="ph-sub">Resumo mensal da empresa ativa</div></div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-head">
+            <span class="tcard-title">Competencias</span>
+            <span class="tcard-count" id="rCount">0 competencias</span>
+          </div>
+          <div class="tcard-scroll">
+            <table>
+              <thead><tr>
+                <th>Competencia</th><th>Notas</th><th>Autorizadas</th><th>Canceladas</th>
+                <th>Valor Servico</th><th>Retencoes</th><th>Valor Liquido</th><th></th>
+              </tr></thead>
+              <tbody id="rBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAINEL CONFIG -->
+      <div id="pConfig" class="hidden">
+        <div class="ph"><div><h2>Configuracoes</h2><div class="ph-sub">Autenticacao e preferencias da empresa ativa</div></div></div>
+        <div class="cgrid">
+          <div class="card">
+            <h3 id="cfgAuthTitle"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.5 0H5.914a1.5 1.5 0 00-1.06.44L2.439 2.853A1.5 1.5 0 002 3.914V14.5A1.5 1.5 0 003.5 16h9a1.5 1.5 0 001.5-1.5v-13A1.5 1.5 0 0012.5 0zm-3 8a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 2c-1.657 0-3 .672-3 1.5V12h6v-.5c0-.828-1.343-1.5-3-1.5z"/></svg> Autenticacao</h3>
+            <div id="cfgInfo" style="margin-bottom:12px;font-size:13px;color:var(--text-secondary)">Selecione uma empresa.</div>
+            <button class="btn" id="btnSwitchAuth" onclick="switchAuthMethod()" style="margin-bottom:12px;font-size:11px;padding:4px 10px">
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M1 11.5a.5.5 0 00.5.5h11.793l-3.147 3.146a.5.5 0 00.708.708l4-4a.5.5 0 000-.708l-4-4a.5.5 0 00-.708.708L13.293 11H1.5a.5.5 0 00-.5.5zm14-7a.5.5 0 01-.5.5H2.707l3.147 3.146a.5.5 0 11-.708.708l-4-4a.5.5 0 010-.708l4-4a.5.5 0 11.708.708L2.707 4H14.5a.5.5 0 01.5.5z"/></svg>
+              Trocar metodo de autenticacao
+            </button>
+            <!-- Campos do certificado -->
+            <div id="cfgCertFields">
+              <div class="field">
+                <label class="field-label">Arquivo .pfx</label>
+                <div style="display:flex;gap:8px">
+                  <input type="text" class="input field-input" id="cfgPath" readonly placeholder="Nenhum arquivo" style="flex:1">
+                  <button class="btn" onclick="selCert()">Selecionar</button>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label">Senha do Certificado</label>
+                <input type="password" class="input field-input" id="cfgPass" placeholder="Senha do certificado">
+              </div>
+              <button class="btn primary" onclick="saveCert()" style="width:100%;justify-content:center;margin-top:4px">Salvar Certificado</button>
+            </div>
+            <!-- Campos de senha -->
+            <div id="cfgSenhaFields" class="hidden">
+              <div class="field">
+                <label class="field-label">CNPJ</label>
+                <input type="text" class="input field-input" id="cfgSenhaCnpj" readonly style="background:var(--bg)">
+              </div>
+              <div class="field">
+                <label class="field-label">Senha do Portal NFS-e</label>
+                <input type="password" class="input field-input" id="cfgSenhaPass" placeholder="Senha de acesso ao portal">
+              </div>
+              <button class="btn primary" onclick="saveSenha()" style="width:100%;justify-content:center;margin-top:4px">Salvar Senha</button>
+            </div>
+          </div>
+          <div class="card">
+            <h3><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 3.5a.5.5 0 00-1 0V8a.5.5 0 00.252.434l3.5 2a.5.5 0 00.496-.868L8 7.71V3.5z"/><path d="M8 16A8 8 0 108 0a8 8 0 000 16zm7-8A7 7 0 111 8a7 7 0 0114 0z"/></svg> Busca Automatica</h3>
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Consulta notas periodicamente e notifica se houver novas emissoes.</div>
+            <div class="field">
+              <label class="field-label">Intervalo (minutos)</label>
+              <input type="number" class="input field-input" id="cfgAutoInterval" min="1" max="1440" placeholder="Ex: 30" style="width:120px">
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn primary" onclick="saveAutoSync()" style="flex:1;justify-content:center">Salvar</button>
+              <button class="btn" onclick="stopAutoSync()" style="flex:1;justify-content:center">Desativar</button>
+            </div>
+            <div id="cfgAutoStatus" style="margin-top:10px;font-size:12px;color:var(--text-muted)"></div>
+          </div>
+          <div class="card">
+            <h3><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 16A8 8 0 108 0a8 8 0 000 16zm.93-9.412l-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.399l-.489.058.03-.14 2.38-.561zM8 5.5a1 1 0 110-2 1 1 0 010 2z"/></svg> Sobre</h3>
+            <div class="field"><label class="field-label">Versao</label><div>NFS-e Monitor v1.3.0</div></div>
+            <div class="field"><label class="field-label">Banco de Dados</label><div id="dbSize">---</div></div>
+            <div class="field"><label class="field-label">Fonte</label><div>nfse.gov.br</div></div>
+            <button class="btn" onclick="repairNotas()" style="margin-top:8px;width:100%;justify-content:center">Reparar Dados</button>
+            <div id="repairResult" style="margin-top:6px;font-size:12px;color:var(--text-muted)"></div>
+            <button class="btn" onclick="openLogFolder()" style="margin-top:6px;width:100%;justify-content:center">
+              <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M1.75 1A1.75 1.75 0 000 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0016 13.25v-8.5A1.75 1.75 0 0014.25 3H7.5a.25.25 0 01-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75z"/></svg>
+              Abrir Pasta de Logs
+            </button>
+            <div id="logPathInfo" style="margin-top:4px;font-size:11px;color:var(--text-muted);word-break:break-all"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+  </div><!-- /layout-body -->
+</div>
+
+<!-- MODAL: Nova Empresa -->
+<div class="overlay hidden" id="empModal">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-head">
+      <h3 id="empModalTitle">Nova Empresa</h3>
+      <button class="modal-x" onclick="closeEmpModal()"><svg viewBox="0 0 14 14" fill="currentColor"><path d="M4.646 4.646a.5.5 0 01.708 0L7 6.293l1.646-1.647a.5.5 0 01.708.708L7.707 7l1.647 1.646a.5.5 0 01-.708.708L7 7.707 5.354 9.354a.5.5 0 01-.708-.708L6.293 7 4.646 5.354a.5.5 0 010-.708z"/></svg></button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Passo 1: Selecao do tipo de autenticacao -->
+      <div id="eStepAuth">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Como deseja autenticar?</div>
+          <div style="font-size:12px;color:var(--text-muted)">Escolha o metodo de acesso ao portal NFS-e Nacional</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <button class="auth-card" id="authCardCert" onclick="selectAuthType('certificado')">
+            <img src="renderer/icons/certificado.svg" alt="Certificado" style="width:56px;height:56px;margin-bottom:10px">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px">Certificado Digital</div>
+            <div style="font-size:11px;color:var(--text-muted);line-height:1.4">Autenticacao via arquivo .pfx/.p12 (A1)</div>
+          </button>
+          <button class="auth-card" id="authCardSenha" onclick="selectAuthType('senha')">
+            <img src="renderer/icons/senha.svg" alt="Senha" style="width:56px;height:56px;margin-bottom:10px">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px">Senha do Portal</div>
+            <div style="font-size:11px;color:var(--text-muted);line-height:1.4">Login com CNPJ e senha do NFS-e Nacional</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Passo 2a: Formulario de certificado -->
+      <div id="eStepCert" class="hidden">
+        <div class="field">
+          <label class="field-label">Arquivo do Certificado (.pfx)</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" class="input field-input" id="eCertPath" readonly placeholder="Selecione o .pfx" style="flex:1">
+            <button class="btn" onclick="selEmpCert()">Selecionar</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Senha do Certificado</label>
+          <input type="password" class="input field-input" id="eCertPass" placeholder="Senha do PFX">
+        </div>
+        <button class="btn" onclick="readEmpCert()" style="width:100%;justify-content:center;margin-bottom:14px">Ler Certificado</button>
+      </div>
+
+      <!-- Passo 2b: Formulario de senha -->
+      <div id="eStepSenha" class="hidden">
+        <div class="field">
+          <label class="field-label">CNPJ da Empresa</label>
+          <input type="text" class="input field-input" id="eSenhaCnpj" placeholder="00.000.000/0000-00">
+        </div>
+        <div class="field">
+          <label class="field-label">Senha do Portal NFS-e</label>
+          <input type="password" class="input field-input" id="eSenhaPass" placeholder="Senha de acesso ao portal">
+        </div>
+        <button class="btn" onclick="readEmpSenha()" style="width:100%;justify-content:center;margin-bottom:14px">Consultar Empresa</button>
+      </div>
+
+      <!-- Area de resultados -->
+      <div id="eCertRes" class="hidden" style="border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:12px;background:var(--bg);">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">Dados do Certificado:</div>
+        <div id="eCertCN" style="font-weight:600"></div>
+        <div id="eCertCNPJ" style="font-size:12px;color:var(--text-secondary);margin-top:2px"></div>
+        <div id="eCertVal" style="font-size:12px;margin-top:2px"></div>
+      </div>
+      <div id="eApiLoading" class="hidden" style="padding:12px;text-align:center;color:var(--text-muted);font-size:13px">
+        <svg width="16" height="16" viewBox="0 0 16 16" style="animation:spin 1s linear infinite;vertical-align:middle;margin-right:6px"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="28" stroke-dashoffset="8"/></svg>
+        Consultando dados na Receita Federal...
+      </div>
+      <div id="eApiRes" class="hidden" style="border:1px solid var(--success);border-radius:var(--radius-lg);padding:12px;margin-bottom:4px;background:var(--success-bg);">
+        <div style="font-size:11px;color:var(--success);font-weight:600;margin-bottom:6px">Dados da Receita Federal:</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px">
+          <div><span class="field-label">Razao Social</span><div id="eApiRazao"></div></div>
+          <div><span class="field-label">Nome Fantasia</span><div id="eApiFantasia"></div></div>
+          <div><span class="field-label">Municipio / UF</span><div id="eApiMun"></div></div>
+          <div><span class="field-label">Regime Tributario</span><div id="eApiRegime"></div></div>
+          <div><span class="field-label">Situacao</span><div id="eApiSit"></div></div>
+          <div><span class="field-label">Atividade</span><div id="eApiCnae"></div></div>
+        </div>
+      </div>
+      <div id="eApiErr" class="hidden" style="border:1px solid var(--danger);border-radius:var(--radius-lg);padding:10px;margin-bottom:4px;background:var(--danger-bg);color:var(--danger);font-size:13px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="empBackBtn" onclick="empModalBack()" class="hidden" style="display:none">Voltar</button>
+      <div style="flex:1"></div>
+      <button class="btn" onclick="closeEmpModal()">Cancelar</button>
+      <button class="btn primary" id="empSaveBtn" onclick="saveEmpresa()" style="display:none">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Sincronizar -->
+<div class="overlay hidden" id="syncModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Sincronizar Notas</h3>
+      <button class="modal-x" onclick="closeSyncModal()"><svg viewBox="0 0 14 14" fill="currentColor"><path d="M4.646 4.646a.5.5 0 01.708 0L7 6.293l1.646-1.647a.5.5 0 01.708.708L7.707 7l1.647 1.646a.5.5 0 01-.708.708L7 7.707 5.354 9.354a.5.5 0 01-.708-.708L6.293 7 4.646 5.354a.5.5 0 010-.708z"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">Selecione o periodo para buscar notas da empresa atual.</p>
+      <div class="field">
+        <label class="field-label">Periodo</label>
+        <div id="syncCalSlot"></div>
+      </div>
+      <div id="syncProg" class="hidden" style="margin-top:14px">
+        <div class="prog-wrap"><div class="prog-bar" id="syncBar" style="width:0%"></div></div>
+        <div class="prog-text" id="syncText">Aguardando...</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeSyncModal()">Cancelar</button>
+      <button class="btn primary" id="btnStartSync" onclick="startSync()">Iniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Sincronizar Todas -->
+<div class="overlay hidden" id="syncAllModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Sincronizar Todas as Empresas</h3>
+      <button class="modal-x" onclick="closeSyncAllModal()"><svg viewBox="0 0 14 14" fill="currentColor"><path d="M4.646 4.646a.5.5 0 01.708 0L7 6.293l1.646-1.647a.5.5 0 01.708.708L7.707 7l1.647 1.646a.5.5 0 01-.708.708L7 7.707 5.354 9.354a.5.5 0 01-.708-.708L6.293 7 4.646 5.354a.5.5 0 010-.708z"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">Selecione o periodo para buscar notas de todas empresas cadastradas.</p>
+      <div class="field">
+        <label class="field-label">Periodo</label>
+        <div id="syncAllCalSlot"></div>
+      </div>
+      <div id="syncAllProg" class="hidden" style="margin-top:14px">
+        <div class="prog-wrap"><div class="prog-bar" id="syncAllBar" style="width:0%"></div></div>
+        <div class="prog-text" id="syncAllText">Aguardando...</div>
+        <div id="syncAllErrors" style="margin-top:8px;font-size:12px;color:var(--danger);display:none"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeSyncAllModal()">Cancelar</button>
+      <button class="btn primary" id="btnStartSyncAll" onclick="startSyncAll()">Iniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Atualizacao Disponivel -->
+<div class="overlay hidden" id="updateModal" style="background:transparent">
+  <div class="modal" style="max-width:400px;text-align:center;padding:32px 28px;border-radius:8px;background:#ffffff;border:1px solid #e5e5e5;box-shadow:0 25px 50px rgba(0,0,0,0.15)">
+    <div id="updateLottie" style="width:180px;height:180px;margin:0 auto 16px"></div>
+    <h3 style="font-size:20px;font-weight:600;color:#1c1c1c;margin-bottom:8px;font-family:'Segoe UI Variable','Segoe UI',sans-serif">Atualização disponível</h3>
+    <p style="font-size:13px;color:#616161;margin-bottom:24px;line-height:1.5">Uma nova versão do NFS-e Monitor foi baixada e está pronta para instalar.</p>
+    <button class="btn primary" id="btnRestartUpdate" onclick="installUpdateAndRestart()" style="width:100%;padding:10px 20px;font-size:13px;font-weight:600;border-radius:6px;background:linear-gradient(135deg,#0078d4,#106ebe);border:none;color:white">
+      Reiniciar agora
+    </button>
+  </div>
+</div>
+
+<script src="renderer/calendar.js"></script>
+<script src="renderer/app.js"></script>
+<script src="renderer/lottie.min.js"></script>
+</body>
+</html>

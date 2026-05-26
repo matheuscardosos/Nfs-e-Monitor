@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>NFS-e Monitor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 320px;
+      height: 320px;
+      background: #ffffff;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI Variable', 'Segoe UI', -apple-system, sans-serif;
+      overflow: hidden;
+      border: 1px solid #e5e5e5;
+    }
+    #lottie {
+      width: 140px;
+      height: 140px;
+    }
+    .brand {
+      margin-top: 20px;
+      color: #1c1c1c;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    .version {
+      color: #616161;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    .loading {
+      color: #0078d4;
+      font-size: 11px;
+      margin-top: 16px;
+      font-weight: 500;
+    }
+    .progress-bar {
+      width: 180px;
+      height: 3px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      width: 30%;
+      height: 100%;
+      background: linear-gradient(90deg, #0078d4, #106ebe);
+      border-radius: 2px;
+      animation: progress 2s ease-in-out infinite;
+    }
+    @keyframes progress {
+      0% { width: 0%; transform: translateX(-100%); }
+      50% { width: 50%; transform: translateX(0); }
+      100% { width: 30%; transform: translateX(200%); }
+    }
+  </style>
+</head>
+<body>
+  <div id="lottie"></div>
+  <div class="brand">NFS-e Monitor</div>
+  <div class="version" id="version">v...</div>
+  <div class="loading">Iniciando...</div>
+  <div class="progress-bar">
+    <div class="progress-fill"></div>
+  </div>
+
+  <script src="renderer/lottie.min.js"></script>
+  <script>
+    // Carrega versao do package.json
+    if (window.splashApi) {
+      window.splashApi.getAppVersion().then(v => {
+        document.getElementById('version').textContent = 'v' + v;
+      }).catch(() => {
+        document.getElementById('version').textContent = 'v1.3.0';
+      });
+    }
+
+    lottie.loadAnimation({
+      container: document.getElementById('lottie'),
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: 'renderer/splash.json'
+    });
+  </script>
+</body>
+</html>

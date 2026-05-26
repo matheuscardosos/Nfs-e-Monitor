@@ -1,0 +1,43 @@
+# Dependencias
+node_modules/
+
+# Build e distribuicao
+dist/
+out/
+
+# Banco de dados local
+*.db
+*.sqlite
+*.sqlite3
+
+# Arquivos com dados sensiveis
+.env
+.env.*
+*.pfx
+*.p12
+*.key
+*.pem
+
+# Credenciais e tokens (nunca commitar)
+gh_token*
+GH_TOKEN*
+*.token
+secrets.*
+
+# Logs
+logs/
+*.log
+
+# Cache do Electron
+.cache/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.user

@@ -1,0 +1,91 @@
+{
+  "name": "nfse-monitor",
+  "version": "1.3.0",
+  "productName": "NFS-e Monitor",
+  "description": "Gerenciador de NFS-e Nacional - Consulta e sincroniza notas fiscais de servico eletronicas via certificado digital A1",
+  "main": "main.js",
+  "author": "NFSe Monitor",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder --win",
+    "build:protected": "node build-protected.js",
+    "build:dir": "electron-builder --win --dir"
+  },
+  "build": {
+    "appId": "com.nfse.monitor",
+    "productName": "NFS-e Monitor",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "splash.html",
+      "splash-preload.js",
+      "index.html",
+      "renderer/**/*",
+      "renderer/blue-rocket.json",
+      "renderer/server-update.json",
+      "renderer/lottie.min.js",
+      "services/**/*",
+      "build/icon.ico",
+      "build/icon.png",
+      "agpl-3.0.txt",
+      "base64.txt"
+    ],
+    "artifactName": "NFS-e-Monitor-Setup-${version}.exe",
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerSidebar": "build/installerSidebar.bmp",
+      "installerHeader": "build/installerHeader.bmp",
+      "uninstallerSidebar": "build/uninstallerSidebar.bmp",
+      "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NFS-e Monitor",
+      "license": "agpl-3.0.txt",
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "matheuscardosos",
+      "repo": "Nfs-e-Monitor",
+      "private": true,
+      "releaseType": "release"
+    }
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "electron-log": "^5.4.3",
+    "electron-updater": "^6.3.9",
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.1",
+    "node-forge": "^1.3.1",
+    "pdfkit": "^0.15.2",
+    "sharp": "^0.34.5",
+    "sql.js": "^1.14.1"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^26.8.1",
+    "javascript-obfuscator": "^5.4.2",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5"
+  }
+}
