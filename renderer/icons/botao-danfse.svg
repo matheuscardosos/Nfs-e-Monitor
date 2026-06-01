@@ -1,15 +1,11 @@
-<svg viewBox="0 0 180 50" xmlns="http://www.w3.org/2000/svg" width="180" height="50">
+<svg viewBox="0 0 120 44" xmlns="http://www.w3.org/2000/svg" width="120" height="44">
   <defs>
     <filter id="sh2" x="-10%" y="-10%" width="120%" height="130%">
       <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
     </filter>
   </defs>
-
-  <!-- Fundo vermelho escuro -->
-  <rect width="180" height="50" rx="10" fill="#8b1c2c" filter="url(#sh2)"/>
-
-  <!-- Ícone documento SVG fornecido, escalado para ~28x28, centralizado verticalmente -->
-  <g transform="translate(12, 11) scale(0.052)">
+  <rect width="120" height="44" rx="8" fill="#8b1c2c" filter="url(#sh2)"/>
+  <g transform="translate(9, 8) scale(0.055)">
     <g>
       <rect x="115.774" y="335.487" fill="#ffffff" width="194.387" height="18.588"/>
       <rect x="115.774" y="260.208" fill="#ffffff" width="194.387" height="18.527"/>
@@ -19,7 +15,5 @@
       <path fill="#ffffff" d="M431.488,76.205h-26.732l1.375,22.272h25.356c9.594,0,17.349,7.748,17.349,17.342v356.573 c0,9.519-7.755,17.342-17.349,17.342H166.562c-7.163,0-13.339-4.406-15.968-10.581c-0.85-2.097-1.374-4.33-1.374-6.761V456.89 h-22.272v15.503c0,2.294,0.198,4.589,0.593,6.761c3.22,18.588,19.515,32.846,39.022,32.846h264.926 c21.877,0,39.622-17.805,39.622-39.607V115.82C471.11,93.943,453.365,76.205,431.488,76.205z"/>
     </g>
   </g>
-
-  <!-- Texto DANFSe -->
-  <text x="113" y="26" font-family="'Segoe UI', Arial, sans-serif" font-size="15" font-weight="600" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">DANFSe</text>
+  <text x="78" y="22" font-family="'Segoe UI', Arial, sans-serif" font-size="13" font-weight="600" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">DANFSe</text>
 </svg>

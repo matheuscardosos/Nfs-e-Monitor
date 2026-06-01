@@ -7,6 +7,20 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.3.1] — 1 de junho de 2026
+
+### Melhorias
+
+- **Performance de navegação** — troca de aba (Emitidas ↔ Tomadas) agora é instantânea para a mesma empresa; dados são cacheados em memória e só re-buscados ao trocar de empresa, após sincronização ou ao alterar filtros
+- **Botões XML/DANFSe** — SVGs redesenhados com viewBox menor (`120×44`), reduzindo a largura renderizada de ~135 px para ~71 px por botão e eliminando o corte em colunas estreitas
+
+### Corrigido
+
+- **Campo senha bloqueado após troca de método** — ao trocar autenticação de Certificado Digital para Senha do Portal, o campo de senha não aceitava digitação; corrigido substituindo `confirm()` nativo por `dialog.showMessageBox()` do Electron, que não quebra o foco do teclado
+- **Botão DANFSe cortado** — coluna de ações agora tem `min-width` e `overflow:visible` garantindo que os dois botões apareçam mesmo em linhas com nomes de empresa longos
+
+---
+
 ## [1.3.0] — 26 de maio de 2026
 
 ### Novidades
@@ -162,6 +176,7 @@ Versões iniciais de desenvolvimento. Funcionalidades entregues ao longo dessas 
 
 ---
 
+[1.3.1]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.1.8...v1.2.0
 [1.1.8]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.1.7...v1.1.8

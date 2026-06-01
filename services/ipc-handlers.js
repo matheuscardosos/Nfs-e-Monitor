@@ -5,6 +5,23 @@ const { fetchEmitidas, fetchRecebidas, downloadXml, parseXmlDetails, sleep, gene
 
 function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
 
+  ipcMain.handle('refocus-window', () => {
+    const win = getMainWindow();
+    if (win && !win.isDestroyed()) win.webContents.focus();
+  });
+
+  ipcMain.handle('show-confirm-dialog', async (_, message) => {
+    const win = getMainWindow();
+    const { response } = await dialog.showMessageBox(win, {
+      type: 'question',
+      buttons: ['Cancelar', 'Confirmar'],
+      defaultId: 1,
+      cancelId: 0,
+      message
+    });
+    return response === 1;
+  });
+
   // --- EMPRESAS ---
   ipcMain.handle('get-empresas', () => {
     return db.prepare('SELECT * FROM empresas ORDER BY razao_social').all();

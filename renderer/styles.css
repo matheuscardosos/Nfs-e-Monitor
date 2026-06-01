@@ -156,18 +156,33 @@ body {
 .cert-tag.none { background: var(--bg-input); color: var(--text-muted); }
 
 /* ══════════════════════════════════
-   SIDEBAR — Oculta automaticamente, expande no hover
+   SIDEBAR — Colapsada por padrao, sobrepoe o conteudo no hover
    ══════════════════════════════════ */
+.layout-body { position: relative; }
+
 .nav {
-  width: var(--nav-w-collapsed); background: var(--bg-nav);
+  /* Fora do fluxo: flutua sobre o conteudo ao expandir */
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: var(--nav-w-collapsed);
+  background: var(--bg-nav);
   border-right: 1px solid var(--border);
-  display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
-  transition: width .2s ease;
-  z-index: 100;
-  box-shadow: 1px 0 2px rgba(0,0,0,0.03);
+  display: flex; flex-direction: column; overflow: hidden;
+  transition: width .2s ease, box-shadow .2s ease;
+  z-index: 200;
   -webkit-app-region: no-drag;
 }
-.nav:hover { width: var(--nav-w-expanded); }
+.nav:hover {
+  width: var(--nav-w-expanded);
+  box-shadow: 4px 0 16px rgba(0,0,0,0.10);
+}
+
+/* Conteudo principal nao e espremido — recebe apenas o espaco da sidebar colapsada */
+.main {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  padding-left: var(--nav-w-collapsed);
+  -webkit-app-region: no-drag;
+}
+
 .nav-brand {
   padding: 14px 14px 10px; display: flex; align-items: center; gap: 10px;
   white-space: nowrap; overflow: hidden;
@@ -202,9 +217,6 @@ body {
 }
 .nav:hover .nav-badge { opacity: 1; }
 .nav-badge.alert-badge { background: var(--danger); }
-
-/* ── Conteudo principal ── */
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; -webkit-app-region: no-drag; }
 .content { flex: 1; overflow-y: auto; padding: 24px 28px 28px; display: flex; flex-direction: column; gap: 20px; }
 
 /* Cabecalho de pagina */

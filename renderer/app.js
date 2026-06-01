@@ -1,5 +1,11 @@
 /* NFS-e Monitor - App principal */
 
+// Utilitario: atrasa execucao ate o usuario parar de digitar
+function debounce(fn, ms) {
+  let t;
+  return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), ms); };
+}
+
 // Estado
 let empresas = [], activeId = null, notas = [], curPanel = 'dashboard', empCertData = null;
 let calFilter = null;
@@ -8,6 +14,9 @@ let tPage = 1, tPerPage = 15;
 
 // Estado - NFS-e Tomadas (Recebidas)
 let notasRec = [], calFilterRec = null, tPageRec = 1;
+
+// Cache: evita re-buscar notas ao trocar de aba sem mudar empresa ou filtros
+let _dashCachedId = null, _recCachedId = null;
 
 // Notificacoes de update
 let updateAnimation = null;
@@ -182,25 +191,26 @@ async function applyFilters() {
   animateCountUp('sCanc', canceladas + substituidas, false, 600);
   document.getElementById('sCancSub').textContent = `${canceladas} canc. / ${substituidas} subst.`;
   tPage = 1;
+  _dashCachedId = activeId;
   renderTable(notas);
 }
 
-async function loadDash() {
+async function loadDash(force = false) {
+  if (!force && _dashCachedId === activeId) { renderTable(notas); return; }
   await applyFilters();
 }
 
 // ── Tabela com paginacao ──
 const SM = { Autorizada: { cls: 'ok', dot: 'var(--success)' }, Cancelada: { cls: 'err', dot: 'var(--danger)' }, Substituida: { cls: 'err', dot: 'var(--danger)' } };
 
-// Imagens de status (draggable=false para evitar arrastar)
+// SVGs de status inlados — sem IDs para evitar conflito quando multiplas badges iguais aparecem na mesma pagina
 const STATUS_BADGES = {
-  'Autorizada': 'renderer/icons/badge-autorizada.svg',
-  'Cancelada': 'renderer/icons/badge-cancelada.svg',
-  'Substituida': 'renderer/icons/badge-substituida.svg'
+  'Autorizada': `<svg viewBox="0 0 240 72" xmlns="http://www.w3.org/2000/svg" style="height:24px;width:auto;user-select:none;pointer-events:none;" draggable="false"><rect x="0" y="0" width="240" height="72" rx="36" fill="#00b850"/><rect x="0" y="0" width="240" height="36" rx="18" fill="white" opacity="0.1"/><g transform="translate(14,14) scale(0.367)"><path fill="white" opacity="0.9" d="M99.5,52.8l-1.9,4.7c-0.6,1.6-0.6,3.3,0,4.9l1.9,4.7c1.1,2.8,0.2,6-2.3,7.8L93,77.8c-1.4,1-2.3,2.5-2.7,4.1l-0.9,5c-0.6,3-3.1,5.2-6.1,5.3l-5.1,0.2c-1.7,0.1-3.3,0.8-4.5,2l-3.5,3.7c-2.1,2.2-5.4,2.7-8,1.2l-4.4-2.6c-1.5-0.9-3.2-1.1-4.9-0.7l-5,1.2c-2.9,0.7-6-0.7-7.4-3.4l-2.3-4.6c-0.8-1.5-2.1-2.7-3.7-3.2l-4.8-1.6c-2.9-1-4.7-3.8-4.4-6.8l0.5-5.1c0.2-1.7-0.3-3.4-1.4-4.7l-3.2-4c-1.9-2.4-1.9-5.7,0-8.1l3.2-4c1.1-1.3,1.6-3,1.4-4.7l-0.5-5.1c-0.3-3,1.5-5.8,4.4-6.8l4.8-1.6c1.6-0.5,2.9-1.7,3.7-3.2l2.3-4.6c1.4-2.7,4.4-4.1,7.4-3.4l5,1.2c1.6,0.4,3.4,0.2,4.9-0.7l4.4-2.6c2.6-1.5,5.9-1.1,8,1.2l3.5,3.7c1.2,1.2,2.8,2,4.5,2l5.1,0.2c3,0.1,5.6,2.3,6.1,5.3l0.9,5c0.3,1.7,1.3,3.2,2.7,4.1l4.2,2.9C99.7,46.8,100.7,50,99.5,52.8z"/><path fill="#00D566" d="M53.5,75.3c-1.4,0-2.8-0.6-3.8-1.7L37.2,59.3c-1.8-2.1-1.6-5.2,0.4-7.1c2.1-1.8,5.2-1.6,7.1,0.4l9.4,10.7l21.9-17.6c2.1-1.7,5.3-1.4,7,0.8c1.7,2.2,1.4,5.3-0.8,7L56.6,74.2C55.7,74.9,54.6,75.3,53.5,75.3z"/></g><line x1="58" y1="16" x2="58" y2="56" stroke="white" stroke-opacity="0.35" stroke-width="1.2"/><text x="150" y="36" font-family="'Segoe UI',Arial,sans-serif" font-size="24" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle" letter-spacing="1.5">Autorizada</text></svg>`,
+  'Cancelada': `<svg viewBox="0 0 240 72" xmlns="http://www.w3.org/2000/svg" style="height:24px;width:auto;user-select:none;pointer-events:none;" draggable="false"><rect x="0" y="0" width="240" height="72" rx="36" fill="#e02020"/><rect x="0" y="0" width="240" height="36" rx="18" fill="white" opacity="0.1"/><g transform="translate(14,14) scale(0.367)"><path fill="white" opacity="0.9" d="M99.5,52.8l-1.9,4.7c-0.6,1.6-0.6,3.3,0,4.9l1.9,4.7c1.1,2.8,0.2,6-2.3,7.8L93,77.8c-1.4,1-2.3,2.5-2.7,4.1l-0.9,5c-0.6,3-3.1,5.2-6.1,5.3l-5.1,0.2c-1.7,0.1-3.3,0.8-4.5,2l-3.5,3.7c-2.1,2.2-5.4,2.7-8,1.2l-4.4-2.6c-1.5-0.9-3.2-1.1-4.9-0.7l-5,1.2c-2.9,0.7-6-0.7-7.4-3.4l-2.3-4.6c-0.8-1.5-2.1-2.7-3.7-3.2l-4.8-1.6c-2.9-1-4.7-3.8-4.4-6.8l0.5-5.1c0.2-1.7-0.3-3.4-1.4-4.7l-3.2-4c-1.9-2.4-1.9-5.7,0-8.1l3.2-4c1.1-1.3,1.6-3,1.4-4.7l-0.5-5.1c-0.3-3,1.5-5.8,4.4-6.8l4.8-1.6c1.6-0.5,2.9-1.7,3.7-3.2l2.3-4.6c1.4-2.7,4.4-4.1,7.4-3.4l5,1.2c1.6,0.4,3.4,0.2,4.9-0.7l4.4-2.6c2.6-1.5,5.9-1.1,8,1.2l3.5,3.7c1.2,1.2,2.8,2,4.5,2l5.1,0.2c3,0.1,5.6,2.3,6.1,5.3l0.9,5c0.3,1.7,1.3,3.2,2.7,4.1l4.2,2.9C99.7,46.8,100.7,50,99.5,52.8z"/><line x1="42" y1="42" x2="78" y2="78" stroke="#FF3B3B" stroke-width="10" stroke-linecap="round"/><line x1="78" y1="42" x2="42" y2="78" stroke="#FF3B3B" stroke-width="10" stroke-linecap="round"/></g><line x1="58" y1="16" x2="58" y2="56" stroke="white" stroke-opacity="0.35" stroke-width="1.2"/><text x="150" y="36" font-family="'Segoe UI',Arial,sans-serif" font-size="24" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle" letter-spacing="1.5">Cancelada</text></svg>`,
+  'Substituida': `<svg viewBox="0 0 260 72" xmlns="http://www.w3.org/2000/svg" style="height:24px;width:auto;user-select:none;pointer-events:none;" draggable="false"><rect x="0" y="0" width="260" height="72" rx="36" fill="#7c22d4"/><rect x="0" y="0" width="260" height="36" rx="18" fill="white" opacity="0.1"/><g transform="translate(10,12) scale(2.0)"><path d="M12.984 4.99268C12.984 4.44039 13.4318 3.99268 13.984 3.99268C14.3414 3.99268 14.655 4.18016 14.8319 4.46214L17.5195 7.14976C17.91 7.54029 17.91 8.17345 17.5195 8.56398C17.129 8.9545 16.4958 8.9545 16.1053 8.56398L14.984 7.44275V14.9927C14.984 15.545 14.5363 15.9927 13.984 15.9927C13.4318 15.9927 12.984 15.545 12.984 14.9927V5.04213C12.9839 5.033 12.9839 5.02388 12.984 5.01476V4.99268Z" fill="white"/><path d="M11.0158 19.0076C11.0158 19.5599 10.5681 20.0076 10.0158 20.0076C9.65844 20.0076 9.34484 19.8201 9.16801 19.5381L6.48039 16.8505C6.08987 16.46 6.08987 15.8268 6.48039 15.4363C6.87092 15.0457 7.50408 15.0457 7.89461 15.4363L9.01583 16.5575V9.00757C9.01583 8.45528 9.46355 8.00757 10.0158 8.00757C10.5681 8.00757 11.0158 8.45528 11.0158 9.00757V18.9581C11.016 18.9672 11.016 18.9764 11.0158 18.9855V19.0076Z" fill="white"/></g><line x1="62" y1="16" x2="62" y2="56" stroke="white" stroke-opacity="0.35" stroke-width="1.2"/><text x="162" y="36" font-family="'Segoe UI',Arial,sans-serif" font-size="24" font-weight="800" fill="white" text-anchor="middle" dominant-baseline="middle" letter-spacing="1.5">Substituída</text></svg>`
 };
 function getStatusBadge(status) {
-  const src = STATUS_BADGES[status];
-  if (src) return `<img src="${src}" class="status-badge" draggable="false" alt="${status}" title="${status}" style="height:24px;width:auto;user-select:none;pointer-events:none;">`;
+  if (STATUS_BADGES[status]) return STATUS_BADGES[status];
   const st = SM[status] || { cls: 'warn', dot: 'var(--warning)' };
   return `<span class="badge ${st.cls}"><span class="badge-dot" style="background:${st.dot}"></span>${status}</span>`;
 }
@@ -240,14 +250,14 @@ function renderTable(list) {
       <td class="money">${fmtM(n.valor_servico)}</td>
       <td class="money">${fmtM(n.valor_liquido)}</td>
       <td>${getStatusBadge(n.status)}</td>
-      <td style="white-space:nowrap">${xmlBtn}<span style="width:6px;display:inline-block"></span>${pdfBtn}</td>
+      <td style="white-space:nowrap;overflow:visible;max-width:none;min-width:150px">${xmlBtn}<span style="width:4px;display:inline-block"></span>${pdfBtn}</td>
     </tr>`;
   }).join('');
 }
 
 function prevPage() { if (tPage > 1) { tPage--; renderTable(notas); } }
 function nextPage() { tPage++; renderTable(notas); }
-function filterTable() { tPage = 1; renderTable(notas); }
+const filterTable = debounce(function() { tPage = 1; renderTable(notas); }, 150);
 
 // ── Seletor de empresa ──
 let ddOpen = false;
@@ -296,6 +306,7 @@ async function togglePause(empresaId) {
 }
 
 async function selectComp(id) {
+  if (id !== activeId) { _dashCachedId = null; _recCachedId = null; }
   activeId = id; const c = empresas.find(e => e.id === id); if (!c) return;
   document.getElementById('compName').textContent = c.razao_social;
   document.getElementById('compCnpj').textContent = c.cnpj;
@@ -601,7 +612,8 @@ async function loadCfg() {
   document.getElementById('cfgSenhaFields').classList.toggle('hidden', !isSenha);
   if (isSenha) {
     document.getElementById('cfgSenhaCnpj').value = c.cnpj || '';
-    document.getElementById('cfgSenhaPass').value = c.portal_senha || '';
+    const passEl = document.getElementById('cfgSenhaPass');
+    if (!passEl.value) passEl.value = c.portal_senha || '';
   } else {
     document.getElementById('cfgPath').value = c.cert_path || '';
     document.getElementById('cfgPass').value = c.cert_password || '';
@@ -659,9 +671,10 @@ async function switchAuthMethod() {
   if (!c) return;
   const newAuth = c.auth_type === 'senha' ? 'certificado' : 'senha';
   const label = newAuth === 'senha' ? 'Senha do Portal' : 'Certificado Digital';
-  if (!confirm(`Trocar autenticacao de "${c.razao_social}" para ${label}?`)) return;
+  const ok = await window.api.showConfirmDialog(`Trocar autenticacao de "${c.razao_social}" para ${label}?`);
+  if (!ok) return;
   await window.api.updateEmpresa(activeId, { auth_type: newAuth });
-  empresas = await window.api.getEmpresas(); renderDD(); selectComp(activeId); loadCfg();
+  empresas = await window.api.getEmpresas(); renderDD(); await selectComp(activeId); await loadCfg();
 }
 
 
@@ -703,7 +716,7 @@ async function startSync() {
   window.api.onSyncProgress(d => { showTopSync(d.message, d.progress); });
   const r = await window.api.syncEmpresa(activeId, range.inicio, range.fim);
   if (r.error) { showTopSync('Erro: ' + r.error, 100); }
-  else { showTopSync(`Concluido! ${r.total} notas.`, 100); await loadDash(); setTimeout(hideTopSync, 4000); }
+  else { showTopSync(`Concluido! ${r.total} notas.`, 100); _dashCachedId = null; _recCachedId = null; await loadDash(true); setTimeout(hideTopSync, 4000); }
   document.getElementById('btnStartSync').disabled = false;
 }
 
@@ -733,7 +746,7 @@ async function startSyncAll() {
     showTopSync('Erro: ' + r.error, 100);
   } else {
     showTopSync(`Concluido! ${r.total} notas de ${r.empresas} empresas.`, 100);
-    await loadDash();
+    _dashCachedId = null; _recCachedId = null; await loadDash(true);
     setTimeout(hideTopSync, 5000);
   }
   document.getElementById('btnStartSyncAll').disabled = false;
@@ -910,7 +923,7 @@ async function stopAutoSync() {
 window.api.onAutoSyncAlert((data) => {
   showTopSync(`${data.empresa}: ${data.novas} nota(s) nova(s)!`, 100);
   setTimeout(hideTopSync, 8000);
-  loadDash();
+  _dashCachedId = null; _recCachedId = null; loadDash(true);
   // Atualiza badge de alertas (filtrado)
   window.api.getAlertas().then(allRows => {
     const now = new Date();
@@ -947,7 +960,7 @@ async function repairNotas() {
     const r = await window.api.repairNotasFromXml();
     el.textContent = `Concluido: ${r.fixed} notas reparadas de ${r.total} com XML.`;
     el.style.color = 'var(--success)';
-    if (curPanel === 'dashboard') loadDash();
+    if (curPanel === 'dashboard') { _dashCachedId = null; loadDash(true); }
   } catch (e) {
     el.textContent = 'Erro: ' + e.message;
     el.style.color = 'var(--danger)';
@@ -1008,12 +1021,14 @@ async function applyFiltersRec() {
   document.getElementById('sCancSubRec').textContent = `${canceladas} canc. / ${substituidas} subst.`;
 
   document.getElementById('navCountRec').textContent = notasRec.length;
+  _recCachedId = activeId;
   tPageRec = 1;
   renderTableRec();
 }
 
-async function loadDashRecebidas() {
+async function loadDashRecebidas(force = false) {
   if (!calFilterRec) initCalendarRec();
+  if (!force && _recCachedId === activeId) { renderTableRec(); return; }
   await applyFiltersRec();
 }
 
@@ -1053,14 +1068,14 @@ function renderTableRec() {
       <td class="money">${fmtM(n.valor_servico)}</td>
       <td class="money">${fmtM(n.valor_liquido)}</td>
       <td>${getStatusBadge(n.status)}</td>
-      <td style="white-space:nowrap">${xmlBtn}<span style="width:6px;display:inline-block"></span>${pdfBtn}</td>
+      <td style="white-space:nowrap;overflow:visible;max-width:none;min-width:150px">${xmlBtn}<span style="width:4px;display:inline-block"></span>${pdfBtn}</td>
     </tr>`;
   }).join('');
 }
 
 function prevPageRec() { if (tPageRec > 1) { tPageRec--; renderTableRec(); } }
 function nextPageRec() { tPageRec++; renderTableRec(); }
-function filterTableRec() { tPageRec = 1; renderTableRec(); }
+const filterTableRec = debounce(function() { tPageRec = 1; renderTableRec(); }, 150);
 
 function getActiveFiltersRec() {
   const tipo = document.getElementById('fTipoRec')?.value || 'competencia';

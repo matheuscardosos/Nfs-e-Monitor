@@ -1,6 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
+  refocusWindow: () => ipcRenderer.invoke('refocus-window'),
+  showConfirmDialog: (message) => ipcRenderer.invoke('show-confirm-dialog', message),
+
   // Empresas
   getEmpresas: () => ipcRenderer.invoke('get-empresas'),
   getEmpresa: (id) => ipcRenderer.invoke('get-empresa', id),
