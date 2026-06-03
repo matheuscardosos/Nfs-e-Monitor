@@ -644,6 +644,11 @@ async function loadDbStats() {
 async function loadCfg() {
   await loadDbStats();
   loadNotifToggles();
+  window.api.getAppVersion().then(v => {
+    const el = document.getElementById('sobreVersion');
+    if (el) el.textContent = 'NFS-e Monitor v' + v;
+  }).catch(() => {});
+
   const c = empresas.find(e => e.id === activeId);
   if (!c) { document.getElementById('cfgInfo').textContent = 'Selecione uma empresa.'; document.getElementById('btnSwitchAuth').classList.add('hidden'); return; }
   document.getElementById('btnSwitchAuth').classList.remove('hidden');

@@ -7,6 +7,14 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.5.3] — 3 de junho de 2026
+
+### Corrigido
+
+- Versao no painel "Sobre" hardcoded nao atualizava com o programa — agora lida dinamicamente via API
+
+---
+
 ## [1.5.2] — 3 de junho de 2026
 
 ### Corrigido
@@ -210,6 +218,7 @@ Versões iniciais de desenvolvimento. Funcionalidades entregues ao longo dessas 
 
 ---
 
+[1.5.3]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.3.1...v1.5.0
