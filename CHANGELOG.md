@@ -7,6 +7,14 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.5.2] — 3 de junho de 2026
+
+### Corrigido
+
+- SVGs dos icones (autorizadas, canceladas, emitidas, valor-total, botoes XML/DANFSe) e PR template ausentes dos commits anteriores
+
+---
+
 ## [1.5.1] — 3 de junho de 2026
 
 ### Corrigido
@@ -202,6 +210,7 @@ Versões iniciais de desenvolvimento. Funcionalidades entregues ao longo dessas 
 
 ---
 
+[1.5.2]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.3.1...v1.5.0
 [1.3.1]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.3.0...v1.3.1
