@@ -1,6 +1,6 @@
 {
   "name": "nfse-monitor",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "productName": "NFS-e Monitor",
   "description": "Gerenciador de NFS-e Nacional - Consulta e sincroniza notas fiscais de servico eletronicas via certificado digital A1",
   "main": "main.js",
@@ -9,8 +9,7 @@
     "start": "electron .",
     "dev": "electron . --dev",
     "build": "electron-builder --win",
-    "build:protected": "node build-protected.js",
-    "build:dir": "electron-builder --win --dir"
+"build:dir": "electron-builder --win --dir"
   },
   "build": {
     "appId": "com.nfse.monitor",
@@ -23,6 +22,8 @@
       "preload.js",
       "splash.html",
       "splash-preload.js",
+      "status-window.html",
+      "status-preload.js",
       "index.html",
       "renderer/**/*",
       "renderer/blue-rocket.json",

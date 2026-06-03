@@ -7,6 +7,14 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.5.1] — 3 de junho de 2026
+
+### Corrigido
+
+- `status-window.html` e `status-preload.js` ausentes do pacote de build — janela de historico de status abria em branco na versao 1.5.0
+
+---
+
 ## [1.5.0] — 3 de junho de 2026
 
 ### Adicionado
@@ -194,6 +202,7 @@ Versões iniciais de desenvolvimento. Funcionalidades entregues ao longo dessas 
 
 ---
 
+[1.5.1]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.3.1...v1.5.0
 [1.3.1]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.2.0...v1.3.0
