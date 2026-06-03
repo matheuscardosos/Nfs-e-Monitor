@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+html, body { width: 540px; height: 260px; background: #fff; overflow: hidden; }
+.container {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px 4px;
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+}
+.title { font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.06em; text-transform: uppercase; }
+.header-right { display: flex; align-items: center; gap: 8px; -webkit-app-region: no-drag; }
+.filters { display: flex; gap: 2px; }
+.filter-btn {
+  padding: 2px 8px; font-size: 11px; font-weight: 500;
+  border: 1px solid #e5e7eb; background: #fff; color: #777;
+  border-radius: 4px; cursor: pointer; font-family: inherit;
+  transition: all 0.1s;
+}
+.filter-btn:hover { border-color: #aaa; color: #333; }
+.filter-btn.active { background: #111; color: #fff; border-color: #111; }
+.close-btn {
+  width: 20px; height: 20px; border: none; background: none; cursor: pointer;
+  color: #bbb; font-size: 14px; display: flex; align-items: center; justify-content: center;
+  border-radius: 4px; transition: background 0.1s, color 0.1s;
+}
+.close-btn:hover { background: #c42b1c; color: #fff; }
+.uptime-row {
+  display: flex; align-items: baseline; gap: 6px;
+  padding: 2px 12px 8px; flex-shrink: 0;
+}
+.uptime-pct { font-size: 28px; font-weight: 700; line-height: 1; }
+.uptime-label { font-size: 11px; color: #999; }
+.chart-wrap { flex: 1; display: flex; flex-direction: column; padding: 0 12px; min-height: 0; }
+.chart-bars { display: flex; align-items: flex-end; flex: 1; min-height: 0; overflow: hidden; gap: 2px; }
+.bar { flex: 1; min-width: 1px; border-radius: 2px 2px 0 0; cursor: pointer; transition: filter 0.1s; }
+.bar:hover { filter: brightness(1.15); }
+.bar.green  { background: #22c55e; height: 100%; }
+.bar.yellow { background: #eab308; height: 75%; }
+.bar.red    { background: #ef4444; height: 45%; }
+.chart-labels {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: #bbb; padding: 3px 0 0; flex-shrink: 0;
+}
+.legend {
+  display: flex; gap: 10px; padding: 6px 12px 10px;
+  flex-shrink: 0; align-items: center; justify-content: flex-end;
+}
+.leg { display: flex; align-items: center; gap: 3px; font-size: 10px; color: #aaa; }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.tooltip {
+  position: fixed; background: #1e293b; color: #f1f5f9;
+  border-radius: 6px; padding: 8px 11px; font-size: 11px;
+  pointer-events: none; z-index: 999; display: none;
+  white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6;
+}
+.tt-date { font-weight: 600; margin-bottom: 1px; }
+.tt-row { color: #94a3b8; }
+.tt-row span { color: #f1f5f9; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <span class="title">Status: nfse.gov.br</span>
+    <div class="header-right">
+      <div class="filters" id="filters">
+        <button class="filter-btn active" data-f="1d">1d</button>
+        <button class="filter-btn" data-f="7d">7d</button>
+        <button class="filter-btn" data-f="1m">1m</button>
+      </div>
+      <button class="close-btn" id="closeBtn">✕</button>
+    </div>
+  </div>
+  <div class="uptime-row">
+    <span class="uptime-pct" id="uptimePct" style="color:#aaa">—</span>
+    <span class="uptime-label" id="uptimeLabel">disponibilidade</span>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-bars" id="chartBars"></div>
+    <div class="chart-labels">
+      <span id="labelStart">—</span>
+      <span>Agora</span>
+    </div>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>Normal</div>
+    <div class="leg"><div class="leg-dot" style="background:#eab308"></div>Parcial</div>
+    <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Indisponível</div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tt-date" id="ttDate"></div>
+  <div class="tt-row">Status: <span id="ttLevel"></span></div>
+  <div class="tt-row" id="ttChecksRow">Verificações: <span id="ttChecks"></span></div>
+  <div class="tt-row">Tempo médio: <span id="ttAvg"></span></div>
+</div>
+
+<script>
+document.getElementById('closeBtn').addEventListener('click', () => window.api.closeStatusWindow());
+
+const LEVEL_ORDER   = { red: 3, yellow: 2, green: 1 };
+const LEVEL_LABELS  = { green: 'Normal', yellow: 'Parcial', red: 'Indisponível' };
+const PCT_COLOR     = p => p >= 95 ? '#16a34a' : p >= 80 ? '#ca8a04' : '#dc2626';
+const PERIOD_LABELS = { '1d': 'nas últimas 24h', '7d': 'nos últimos 7 dias', '1m': 'nos últimos 30 dias' };
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function toLocalDay(ts) { const d = new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function fmtDate(s) { const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`; }
+function fmtTime(ts) { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function fmtHour(ts) { const d = new Date(ts); return `${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}h`; }
+
+function worstLevel(recs) {
+  let w = 'green';
+  for (const r of recs) if ((LEVEL_ORDER[r.level] || 0) > LEVEL_ORDER[w]) w = r.level;
+  return w;
+}
+function medianMs(recs) {
+  const v = recs.filter(r => r.avg_ms != null).map(r => r.avg_ms).sort((a, b) => a - b);
+  return v.length ? v[Math.floor(v.length / 2)] : null;
+}
+
+function buildBars(history, filter) {
+  const now = Date.now();
+
+  if (filter === '1d') {
+    return history
+      .filter(r => r.checked_at >= now - 24 * 60 * 60 * 1000)
+      .map(r => ({ label: fmtTime(r.checked_at), level: r.level, ms: r.avg_ms, isIndividual: true }));
+  }
+
+  const cutoff  = now - (filter === '7d' ? 7 : 30) * 24 * 60 * 60 * 1000;
+  const slice   = history.filter(r => r.checked_at >= cutoff);
+  const truncFn = filter === '7d'
+    ? ts => { const d = new Date(ts); d.setMinutes(0, 0, 0); return d.getTime(); }
+    : ts => { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); };
+  const labelFn = filter === '7d' ? ts => fmtHour(ts) : ts => fmtDate(toLocalDay(ts));
+
+  const map = new Map();
+  for (const r of slice) {
+    const k = truncFn(r.checked_at);
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(r);
+  }
+
+  return [...map.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([ts, recs]) => ({ label: labelFn(ts), level: worstLevel(recs), checks: recs.length, ms: medianMs(recs) }));
+}
+
+function computeUptime(history, filter) {
+  const now    = Date.now();
+  const cutoff = now - (filter === '1d' ? 1 : filter === '7d' ? 7 : 30) * 24 * 60 * 60 * 1000;
+  const slice  = history.filter(r => r.checked_at >= cutoff);
+  if (!slice.length) return null;
+  return parseFloat((slice.filter(r => r.level !== 'red').length / slice.length * 100).toFixed(1));
+}
+
+let allHistory = [];
+let currentFilter = '1d';
+
+function render() {
+  const bars  = buildBars(allHistory, currentFilter);
+  const pct   = computeUptime(allHistory, currentFilter);
+  const pctEl = document.getElementById('uptimePct');
+
+  pctEl.textContent = pct !== null ? `${pct}%` : '—';
+  pctEl.style.color = pct !== null ? PCT_COLOR(pct) : '#aaa';
+  document.getElementById('uptimeLabel').textContent = PERIOD_LABELS[currentFilter];
+  document.getElementById('labelStart').textContent  = bars.length ? bars[0].label : '—';
+
+  const barsEl  = document.getElementById('chartBars');
+  const tooltip = document.getElementById('tooltip');
+  barsEl.style.gap = bars.length > 120 ? '0px' : bars.length > 50 ? '1px' : '2px';
+  barsEl.innerHTML  = '';
+
+  bars.forEach(b => {
+    const bar = document.createElement('div');
+    bar.className = `bar ${b.level}`;
+
+    bar.addEventListener('mouseenter', () => {
+      document.getElementById('ttDate').textContent  = b.label;
+      document.getElementById('ttLevel').textContent = LEVEL_LABELS[b.level] || '—';
+      const checksRow = document.getElementById('ttChecksRow');
+      checksRow.style.display = b.isIndividual ? 'none' : '';
+      if (!b.isIndividual) document.getElementById('ttChecks').textContent = `${b.checks}x`;
+      document.getElementById('ttAvg').textContent = b.ms != null ? `${b.ms}ms` : '—';
+      tooltip.style.display = 'block';
+    });
+    bar.addEventListener('mousemove', e => {
+      const W = 165;
+      let tx = e.clientX + 12;
+      if (tx + W > window.innerWidth) tx = e.clientX - W - 4;
+      tooltip.style.left = `${tx}px`;
+      tooltip.style.top  = `${Math.max(0, e.clientY - 80)}px`;
+    });
+    bar.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+    barsEl.appendChild(bar);
+  });
+}
+
+document.getElementById('filters').addEventListener('click', e => {
+  const btn = e.target.closest('[data-f]');
+  if (!btn) return;
+  currentFilter = btn.dataset.f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.f === currentFilter));
+  render();
+});
+
+window.api.getPortalStatusHistory().then(h => { allHistory = h; render(); }).catch(console.error);
+</script>
+</body>
+</html>

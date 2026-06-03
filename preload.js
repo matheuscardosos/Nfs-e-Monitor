@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
   refocusWindow: () => ipcRenderer.invoke('refocus-window'),
+  checkPortalStatus: () => ipcRenderer.invoke('check-portal-status'),
+  getPortalStatusHistory: () => ipcRenderer.invoke('get-portal-status-history'),
   showConfirmDialog: (message) => ipcRenderer.invoke('show-confirm-dialog', message),
 
   // Empresas
@@ -81,4 +83,8 @@ contextBridge.exposeInMainWorld('api', {
   onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (_, version) => callback(version)),
   onUpdateReady: (callback) => ipcRenderer.on('update-ready', (_, version) => callback(version)),
   installUpdate: () => ipcRenderer.invoke('install-update'),
+
+  // Configuracao de notificacoes
+  getNotifConfig: () => ipcRenderer.invoke('get-notif-config'),
+  setNotifConfig: (key, value) => ipcRenderer.invoke('set-notif-config', key, value),
 });

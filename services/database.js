@@ -192,7 +192,25 @@ async function initDatabase(userDataPath) {
       chave TEXT PRIMARY KEY,
       valor TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS portal_status_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      checked_at INTEGER NOT NULL,
+      level TEXT NOT NULL,
+      score INTEGER,
+      avg_ms INTEGER,
+      good INTEGER,
+      slow INTEGER,
+      failed INTEGER
+    );
+    CREATE INDEX IF NOT EXISTS idx_psh_checked_at ON portal_status_history(checked_at);
   `);
+
+  // Defaults de notificacoes
+  const notifKeys = ['notif_sync_novas', 'notif_atualizacao', 'notif_offline', 'notif_portal_instavel', 'notif_sync_erro'];
+  for (const k of notifKeys) {
+    wrapper.prepare("INSERT OR IGNORE INTO config (chave, valor) VALUES (?, '1')").run(k);
+  }
 
   // Migracoes
   try {

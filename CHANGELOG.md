@@ -7,6 +7,24 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.5.0] — 3 de junho de 2026
+
+### Adicionado
+
+- **Monitor de status do portal** — verificacao paralela com 10 probes simultâneos + pontuação (ok+rapida=2pts, ok+lenta=1pt, falha=0pts; max=20; green≥18, yellow≥10, red<10); deteccao de offline via canary (1.1.1.1); historico de 30 dias persistido no banco
+- **Historico de status** — popup no systray com grafico de barras (filtros 1d/7d/1m), uptime %, tooltips com data/horario e tempo medio de resposta
+- **Pause/resume automatico do autosync** — quando offline ou portal red, sync pausa imediatamente e retoma sozinho ao detectar recuperacao (polling 30s offline / 3min portal); retry automatico em erros de rede/503 com backoff antes de pausar
+- **Configuracoes de notificacoes** — nova aba "Notificacoes" em Configuracoes com toggles estilo Windows para cada tipo de alerta: novas notas, falha no ciclo, offline, portal indisponivel, atualizacoes
+- **Notificacao de falha no ciclo** — ao fim de cada ciclo automatico com erros, notifica quantas empresas falharam
+- **Refatoracao de Configuracoes** — layout com sidebar interna (Autenticacao, Busca Automatica, Notificacoes, Sobre)
+
+### Melhorias
+
+- **Deteccao de instabilidade** — erros HTTP 503 durante sync disparam verificacao de conectividade antes de decidir pausar ou continuar
+- **Logs de status** — cada verificacao do portal registra resultado de cada probe individualmente (status, ms, ok) alem do calculo final (good/slow/failed/score/avgMs)
+
+---
+
 ## [1.3.1] — 1 de junho de 2026
 
 ### Melhorias
@@ -176,6 +194,7 @@ Versões iniciais de desenvolvimento. Funcionalidades entregues ao longo dessas 
 
 ---
 
+[1.5.0]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.3.1...v1.5.0
 [1.3.1]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.1.8...v1.2.0

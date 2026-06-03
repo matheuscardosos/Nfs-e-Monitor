@@ -2,8 +2,57 @@ const fs = require('fs');
 const path = require('path');
 const { parsePfxCertificate, formatCnpj } = require('./certificate');
 const { fetchEmitidas, fetchRecebidas, downloadXml, parseXmlDetails, sleep, generate30DayChunks } = require('./nfse-api');
+const { checkPortalStatus } = require('./portal-status');
 
 function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
+
+  ipcMain.handle('check-portal-status', async () => {
+    const result = await checkPortalStatus();
+    if (!result.offline) {
+      try {
+        db.prepare(
+          'INSERT INTO portal_status_history (checked_at, level, score, avg_ms, good, slow, failed) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        ).run(
+          result.checkedAt,
+          result.level,
+          result.samples.score,
+          result.samples.avgMs,
+          result.samples.good,
+          result.samples.slow,
+          result.samples.failed
+        );
+        // Purga entradas mais antigas que 30 dias
+        db.prepare('DELETE FROM portal_status_history WHERE checked_at < ?').run(
+          Date.now() - 30 * 24 * 60 * 60 * 1000
+        );
+      } catch (e) { /* silencioso */ }
+    }
+    return result;
+  });
+
+  ipcMain.handle('get-portal-status-history', () => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return db.prepare(
+      'SELECT * FROM portal_status_history WHERE checked_at >= ? ORDER BY checked_at ASC'
+    ).all(cutoff);
+  });
+
+  const NOTIF_KEYS = ['notif_sync_novas', 'notif_atualizacao', 'notif_offline', 'notif_portal_instavel', 'notif_sync_erro'];
+
+  ipcMain.handle('get-notif-config', () => {
+    const result = {};
+    for (const k of NOTIF_KEYS) {
+      const row = db.prepare("SELECT valor FROM config WHERE chave = ?").get(k);
+      result[k] = row ? row.valor === '1' : true;
+    }
+    return result;
+  });
+
+  ipcMain.handle('set-notif-config', (_, key, value) => {
+    if (!NOTIF_KEYS.includes(key)) return { error: 'Chave invalida' };
+    db.prepare("INSERT OR REPLACE INTO config (chave, valor) VALUES (?, ?)").run(key, value ? '1' : '0');
+    return { success: true };
+  });
 
   ipcMain.handle('refocus-window', () => {
     const win = getMainWindow();
@@ -1207,10 +1256,90 @@ function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
     db.prepare("INSERT OR REPLACE INTO config (chave, valor) VALUES ('autosync_minutes', ?)").run(String(minutes));
   }
 
+  // --- CONTROLE DE CONECTIVIDADE ---
+  let syncPaused = false;
+  let recoveryTimer = null;
+
+  const NET_ERRORS = new Set(['ECONNREFUSED','ENOTFOUND','ENETUNREACH','ECONNRESET','ETIMEDOUT','EAI_AGAIN','ECONNABORTED','ERR_NETWORK']);
+
+  function isConnectivityError(e) {
+    if (NET_ERRORS.has(e?.code) || NET_ERRORS.has(e?.cause?.code)) return true;
+    const msg = e?.message || '';
+    return msg.includes('503') || e?.response?.status === 503;
+  }
+
+  function getNotifEnabled(key) {
+    const row = db.prepare("SELECT valor FROM config WHERE chave = ?").get(key);
+    return !row || row.valor === '1';
+  }
+
+  function showSyncNotif(key, title, body) {
+    if (!getNotifEnabled(key)) return;
+    const { Notification } = require('electron');
+    if (Notification.isSupported()) {
+      new Notification({ title, body, icon: path.join(__dirname, '..', 'build', 'icon.ico') }).show();
+    }
+  }
+
+  async function detectConnectivity() {
+    const result = await checkPortalStatus();
+    if (result.offline) return 'offline';
+    if (result.level === 'red') return 'portal_red';
+    return 'online';
+  }
+
+  function startRecoveryPolling(reason) {
+    if (recoveryTimer) return;
+    const interval = reason === 'offline' ? 30_000 : 3 * 60_000;
+    console.log(`[autosync] Polling de recuperacao (${reason}), intervalo ${interval / 1000}s`);
+    recoveryTimer = setInterval(async () => {
+      try {
+        const state = await detectConnectivity();
+        if (state === 'online') {
+          clearInterval(recoveryTimer);
+          recoveryTimer = null;
+          syncPaused = false;
+          console.log('[autosync] Conectividade restaurada, retomando...');
+          const notifKey = reason === 'offline' ? 'notif_offline' : 'notif_portal_instavel';
+          const msg = reason === 'offline'
+            ? 'Conexao restaurada. Retomando sincronizacao...'
+            : 'Servico normalizado. Retomando sincronizacao...';
+          showSyncNotif(notifKey, 'NFS-e Monitor', msg);
+          autoSyncLoop();
+        }
+      } catch { /* silencioso */ }
+    }, interval);
+  }
+
+  async function pauseSyncOnError(reason) {
+    if (syncPaused) return;
+    syncPaused = true;
+    console.log(`[autosync] Pausado: ${reason}`);
+    const notifKey = reason === 'offline' ? 'notif_offline' : 'notif_portal_instavel';
+    const msg = reason === 'offline'
+      ? 'Sem conexao com a internet. Sincronizacao pausada. Sera retomada automaticamente.'
+      : 'Servico indisponivel. Sincronizacao pausada. Sera retomada automaticamente.';
+    showSyncNotif(notifKey, 'NFS-e Monitor - Sincronizacao Pausada', msg);
+    startRecoveryPolling(reason);
+  }
+
+  async function retryFetch(fn, label) {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try { return await fn(); }
+      catch (e) {
+        if (attempt === 3 || !isConnectivityError(e)) throw e;
+        console.log(`[autosync] ${label}: tentativa ${attempt} falhou (${e?.code || e?.message}), aguardando ${attempt * 3}s...`);
+        await sleep(attempt * 3000);
+      }
+    }
+  }
+
   async function runAutoSync() {
     const empresasList = db.prepare('SELECT * FROM empresas WHERE ((cert_path IS NOT NULL AND cert_path != "") OR (auth_type = ? AND portal_senha IS NOT NULL AND portal_senha != "")) AND autosync_paused = 0').all('senha');
     if (empresasList.length === 0) return;
+    if (syncPaused) { console.log('[autosync] Sincronizacao pausada, ciclo ignorado.'); return; }
 
+    let erroCount = 0;
     const dataInicio = '01/10/2025';
     const hoje = new Date();
     const dataFim = `${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`;
@@ -1218,6 +1347,7 @@ function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
     console.log(`[autosync] Iniciando busca automatica para ${empresasList.length} empresa(s)...`);
 
     for (const empresa of empresasList) {
+      if (syncPaused) { console.log('[autosync] Sincronizacao pausada, abortando ciclo.'); break; }
       try {
         if (empresa.auth_type === 'senha') {
           if (!empresa.portal_senha) continue;
@@ -1232,7 +1362,7 @@ function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
         let allNotas = [];
 
         for (const chunk of chunks) {
-          const result = await fetchEmitidas(empresa, chunk.inicio, chunk.fim, null);
+          const result = await retryFetch(() => fetchEmitidas(empresa, chunk.inicio, chunk.fim, null), empresa.razao_social);
           if (!session) session = result.session;
           for (const n of result.notas) {
             if (!allNotas.some(x => x.chave_acesso === n.chave_acesso)) allNotas.push(n);
@@ -1318,7 +1448,7 @@ function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
           let allNotasRec = [];
           for (const chunk of chunks) {
             try {
-              const resultRec = await fetchRecebidas(empresa, chunk.inicio, chunk.fim, null, session);
+              const resultRec = await retryFetch(() => fetchRecebidas(empresa, chunk.inicio, chunk.fim, null, session), empresa.razao_social);
               for (const n of resultRec.notas) {
                 if (!allNotasRec.some(x => x.chave_acesso === n.chave_acesso)) allNotasRec.push(n);
               }
@@ -1412,8 +1542,10 @@ function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
               total: allNotas.length
             });
           }
+          const notifRow = db.prepare("SELECT valor FROM config WHERE chave = 'notif_sync_novas'").get();
+          const notifEnabled = !notifRow || notifRow.valor === '1';
           const { Notification } = require('electron');
-          if (Notification.isSupported()) {
+          if (notifEnabled && Notification.isSupported()) {
             new Notification({
               title: 'NFS-e Monitor - Novas Notas',
               body: `${empresa.razao_social}: ${newCount} nota(s) nova(s) encontrada(s)`,
@@ -1424,10 +1556,21 @@ function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
           console.log(`[autosync] ${empresa.razao_social}: sem novas notas`);
         }
       } catch (e) {
+        erroCount++;
         console.error(`[autosync] Erro em ${empresa.razao_social}:`, e?.message ?? String(e));
+        if (isConnectivityError(e)) {
+          const state = await detectConnectivity();
+          if (state !== 'online') { await pauseSyncOnError(state); break; }
+        }
       }
     }
-    console.log('[autosync] Ciclo concluido.');
+    if (erroCount > 0 && !syncPaused) {
+      console.log(`[autosync] Ciclo concluido com ${erroCount} erro(s).`);
+      showSyncNotif('notif_sync_erro', 'NFS-e Monitor - Falha na Sincronizacao',
+        `${erroCount} empresa(s) com falha no ultimo ciclo. Verifique os logs.`);
+    } else {
+      console.log('[autosync] Ciclo concluido.');
+    }
   }
 
   let autoSyncRunning = false;
@@ -1473,6 +1616,8 @@ function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
   ipcMain.handle('stop-autosync', () => {
     saveAutoSyncConfig(0);
     if (autoSyncTimer) { clearTimeout(autoSyncTimer); autoSyncTimer = null; }
+    if (recoveryTimer) { clearInterval(recoveryTimer); recoveryTimer = null; }
+    syncPaused = false;
     console.log('[autosync] Desativado');
     return { success: true };
   });

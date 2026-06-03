@@ -12,6 +12,7 @@ Object.assign(console, log.functions);
 
 let mainWindow;
 let splashWindow;
+let statusWindow = null;
 let db;
 let tray = null;
 let isQuitting = false;
@@ -65,6 +66,46 @@ app.on('second-instance', (event, commandLine, workingDirectory) => {
 
 function getMainWindow() {
   return mainWindow;
+}
+
+function openStatusWindow() {
+  if (statusWindow && !statusWindow.isDestroyed()) {
+    statusWindow.focus();
+    return;
+  }
+  const { screen } = require('electron');
+  const trayBounds = tray.getBounds();
+  const W = 540, H = 260;
+  let x = Math.round(trayBounds.x + trayBounds.width / 2 - W / 2);
+  let y = Math.round(trayBounds.y - H - 8);
+  const display = screen.getDisplayNearestPoint({ x: trayBounds.x, y: trayBounds.y });
+  const b = display.bounds;
+  x = Math.max(b.x, Math.min(x, b.x + b.width - W));
+  y = Math.max(b.y, Math.min(y, b.y + b.height - H));
+
+  statusWindow = new BrowserWindow({
+    width: W, height: H, x, y,
+    frame: false,
+    resizable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    transparent: false,
+    backgroundColor: '#ffffff',
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'status-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  statusWindow.loadFile('status-window.html');
+  statusWindow.once('ready-to-show', () => {
+    if (statusWindow && !statusWindow.isDestroyed()) statusWindow.show();
+  });
+  statusWindow.on('blur', () => {
+    if (statusWindow && !statusWindow.isDestroyed()) statusWindow.close();
+  });
+  statusWindow.on('closed', () => { statusWindow = null; });
 }
 
 function createWindow() {
@@ -134,10 +175,15 @@ app.whenReady().then(async () => {
   tray.setToolTip('NFS-e Monitor');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Abrir', click: () => { mainWindow.maximize(); mainWindow.show(); mainWindow.focus(); } },
+    { label: 'Status do Serviço', click: () => openStatusWindow() },
     { type: 'separator' },
     { label: 'Sair', click: () => { isQuitting = true; app.quit(); } }
   ]));
   tray.on('double-click', () => { mainWindow.maximize(); mainWindow.show(); mainWindow.focus(); });
+
+  ipcMain.handle('close-status-window', () => {
+    if (statusWindow && !statusWindow.isDestroyed()) statusWindow.close();
+  });
 
   const { setupIpcHandlers } = require('./services/ipc-handlers');
   setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app);
@@ -160,12 +206,14 @@ app.whenReady().then(async () => {
 
   autoUpdater.on('update-available', (info) => {
     log.info('[update] Nova versao disponivel:', info.version);
-    // Notificacao em PT-BR
-    new Notification({
-      title: 'NFS-e Monitor - Nova versao disponivel',
-      body: `Versao ${info.version} disponivel. Baixando automaticamente...`,
-      icon: path.join(__dirname, 'assets', 'icon.png')
-    }).show();
+    const notifRow = db.prepare("SELECT valor FROM config WHERE chave = 'notif_atualizacao'").get();
+    if (!notifRow || notifRow.valor === '1') {
+      new Notification({
+        title: 'NFS-e Monitor - Nova versao disponivel',
+        body: `Versao ${info.version} disponivel. Baixando automaticamente...`,
+        icon: path.join(__dirname, 'assets', 'icon.png')
+      }).show();
+    }
     if (mainWindow) {
       mainWindow.webContents.send('update-available', info.version);
     }
@@ -173,12 +221,14 @@ app.whenReady().then(async () => {
 
   autoUpdater.on('update-downloaded', (info) => {
     log.info('[update] Atualizacao baixada, pronta para instalar');
-    // Notificacao em PT-BR
-    new Notification({
-      title: 'NFS-e Monitor - Atualizacao pronta',
-      body: `Versao ${info.version} baixada. Sera instalada ao fechar o aplicativo ou reiniciar.`,
-      icon: path.join(__dirname, 'assets', 'icon.png')
-    }).show();
+    const notifRow2 = db.prepare("SELECT valor FROM config WHERE chave = 'notif_atualizacao'").get();
+    if (!notifRow2 || notifRow2.valor === '1') {
+      new Notification({
+        title: 'NFS-e Monitor - Atualizacao pronta',
+        body: `Versao ${info.version} baixada. Sera instalada ao fechar o aplicativo ou reiniciar.`,
+        icon: path.join(__dirname, 'assets', 'icon.png')
+      }).show();
+    }
     if (mainWindow) {
       mainWindow.webContents.send('update-ready', info.version);
     }

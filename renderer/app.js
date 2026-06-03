@@ -18,6 +18,51 @@ let notasRec = [], calFilterRec = null, tPageRec = 1;
 // Cache: evita re-buscar notas ao trocar de aba sem mudar empresa ou filtros
 let _dashCachedId = null, _recCachedId = null;
 
+// Status do portal NFS-e
+let _portalStatusCheckedOnce = false;
+let _portalStatusInterval = null;
+let _portalLastCheck = null;
+
+const PORTAL_COLORS = { green: '#16a34a', yellow: '#ca8a04', red: '#dc2626', checking: '#aaa' };
+
+function _applyPortalStatus(level, message) {
+  const wrap = document.getElementById('portalStatusWrap');
+  const path = document.getElementById('portalStatusPath');
+  const title = document.getElementById('portalStatusTitle');
+  if (!wrap || !path || !title) return;
+  wrap.className = 'portal-status-wrap status-' + level;
+  path.style.fill = PORTAL_COLORS[level] || '#aaa';
+  title.textContent = message;
+  _portalLastCheck = Date.now();
+  _updatePortalTime();
+}
+
+function _updatePortalTime() {
+  const el = document.getElementById('portalStatusTime');
+  if (!el || !_portalLastCheck) return;
+  const min = Math.floor((Date.now() - _portalLastCheck) / 60000);
+  el.textContent = min < 1 ? 'Atualizado ha poucos segundos' : `Atualizado ha ${min} ${min === 1 ? 'minuto' : 'minutos'}`;
+}
+
+async function refreshPortalStatus() {
+  _applyPortalStatus('checking', 'Verificando...');
+  try {
+    const r = await window.api.checkPortalStatus();
+    _applyPortalStatus(r.level, r.message);
+  } catch(e) {
+    _applyPortalStatus('red', 'Servico indisponivel.');
+  }
+}
+
+// Polling a cada 5 minutos — inicia uma unica vez
+(function startPortalPolling() {
+  if (_portalStatusInterval) return;
+  _portalStatusInterval = setInterval(() => {
+    refreshPortalStatus();
+    setInterval(_updatePortalTime, 30000);
+  }, 5 * 60 * 1000);
+})();
+
 // Notificacoes de update
 let updateAnimation = null;
 
@@ -598,6 +643,7 @@ async function loadDbStats() {
 
 async function loadCfg() {
   await loadDbStats();
+  loadNotifToggles();
   const c = empresas.find(e => e.id === activeId);
   if (!c) { document.getElementById('cfgInfo').textContent = 'Selecione uma empresa.'; document.getElementById('btnSwitchAuth').classList.add('hidden'); return; }
   document.getElementById('btnSwitchAuth').classList.remove('hidden');
@@ -630,6 +676,21 @@ async function loadCfg() {
   const logPath = await window.api.getLogPath();
   const logEl = document.getElementById('logPathInfo');
   if (logEl && logPath) logEl.textContent = logPath;
+
+  // Checa status do portal na primeira abertura da aba (polling gerenciado separadamente)
+  if (!_portalStatusCheckedOnce) { _portalStatusCheckedOnce = true; refreshPortalStatus(); }
+}
+
+async function loadNotifToggles() {
+  const cfg = await window.api.getNotifConfig();
+  ['notif_sync_novas', 'notif_atualizacao', 'notif_offline', 'notif_portal_instavel', 'notif_sync_erro'].forEach(k => {
+    const el = document.getElementById(k);
+    if (el) el.checked = cfg[k] !== false;
+  });
+}
+
+async function saveNotifToggle(el) {
+  await window.api.setNotifConfig(el.id, el.checked);
 }
 
 async function openLogFolder() { await window.api.openLogFolder(); }
