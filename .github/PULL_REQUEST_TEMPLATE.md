@@ -45,4 +45,4 @@
 
 **Documentacao**
 - [ ] `CHANGELOG.md` atualizado com a mudanca
-- [ ] Comentarios no codigo em PT-BR onde a logica nao e autoexplicativa
+- [ ] Comentarios no codigo em PT-BR onde a logica nao é autoexplicativa

@@ -4,7 +4,7 @@
       <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/>
     </filter>
   </defs>
-  <rect width="120" height="44" rx="8" fill="#8b1c2c" filter="url(#sh2)"/>
+  <rect width="120" height="44" rx="8" fill="#D50000" filter="url(#sh2)"/>
   <g transform="translate(9, 8) scale(0.055)">
     <g>
       <rect x="115.774" y="335.487" fill="#ffffff" width="194.387" height="18.588"/>
