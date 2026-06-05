@@ -249,6 +249,13 @@ async function initDatabase(userDataPath) {
     }
   } catch(e) { /* ignorar */ }
 
+  // Migration: limpa xml_content invalido (HTML de erro 403/redirect salvo como XML)
+  try {
+    wrapper.prepare(
+      "UPDATE notas SET xml_content = NULL WHERE xml_content IS NOT NULL AND (xml_content LIKE '%<!DOCTYPE html%' OR xml_content LIKE '%<html%')"
+    ).run();
+  } catch(e) { /* ignorar */ }
+
   return wrapper;
 }
 

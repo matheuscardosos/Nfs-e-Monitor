@@ -37,6 +37,10 @@
 
 ---
 
+> **Aviso (03/06/2026):** O portal NFS-e Nacional implementou hCaptcha nos endpoints de download de XML e DANFSe. O problema foi corrigido na **v1.5.4** com a identificação de uma rota alternativa que não exige validação humana. Os downloads voltam a funcionar normalmente. Existe o risco de que o portal passe a exigir token real nessa rota em versões futuras — caso isso aconteça, os downloads voltarão a falhar e uma nova correção será necessária. O acompanhamento está sendo feito na issue [#1](https://github.com/matheuscardosos/Nfs-e-Monitor/issues/1).
+
+---
+
 ## <img src="assets/prancheta.svg" width="18" height="18" style="vertical-align:middle"> Sobre
 
 O **NFS-e Monitor** é uma aplicação desktop desenvolvida especificamente para **escritórios de contabilidade de pequeno e médio porte** que precisam gerenciar eficientemente as Notas Fiscais de Serviço Eletrônicas (NFS-e) emitidas por seus clientes no portal NFS-e Nacional.
