@@ -7,6 +7,16 @@ e o projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ---
 
+## [1.5.4] — 5 de junho de 2026
+
+### Corrigido
+
+- Downloads de XML e DANFSe voltam a funcionar apos hCaptcha implementado pelo portal em 03/06/2026 — uso de rota alternativa sem validacao humana (#1)
+- XMLs corrompidos com conteudo HTML (403 Forbidden) sao limpos automaticamente do banco na inicializacao e re-baixados no proximo sync
+- Validacao do conteudo retornado no download de XML para evitar salvar respostas de erro no banco
+
+---
+
 ## [1.5.3] — 3 de junho de 2026
 
 ### Corrigido
@@ -218,6 +228,7 @@ Versões iniciais de desenvolvimento. Funcionalidades entregues ao longo dessas 
 
 ---
 
+[1.5.4]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.5.1...v1.5.2
 [1.5.1]: https://github.com/matheuscardosos/Nfs-e-Monitor/compare/v1.5.0...v1.5.1

@@ -296,9 +296,14 @@ async function fetchEmitidas(empresa, dataInicio, dataFim, progressCallback) {
 
 async function downloadXml(chaveAcesso, session) {
   try {
-    const url = `${BASE}/Notas/Download/NFSe/${chaveAcesso}`;
+    const url = `${BASE}/DPS/ModalCaptcha/NFSe/${chaveAcesso}`;
     const response = await session.get(url, { responseType: 'text' });
-    return response.data;
+    const data = response.data;
+    if (typeof data !== 'string' || !data.trimStart().startsWith('<') || data.includes('<!DOCTYPE html') || data.includes('<html')) {
+      console.warn('[nfse-api] Download XML retornou conteudo invalido (possivelmente 403/HTML):', chaveAcesso);
+      return null;
+    }
+    return data;
   } catch (e) {
     console.error('[nfse-api] Erro download XML:', chaveAcesso, e.message);
     return null;

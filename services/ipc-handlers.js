@@ -1224,7 +1224,7 @@ function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
       const nfseApi = require('./nfse-api');
       const empresa = { cert_path: nota.cert_path, cert_password: nota.cert_password, auth_type: nota.auth_type, portal_senha: nota.portal_senha, cnpj: nota.cnpj };
       const session = await nfseApi.createSessionAuto(empresa);
-      const danfeUrl = `https://www.nfse.gov.br/EmissorNacional/Notas/Download/DANFSe/${nota.chave_acesso}`;
+      const danfeUrl = `https://www.nfse.gov.br/EmissorNacional/DPS/ModalCaptcha/DANFSe/${nota.chave_acesso}`;
       const resp = await session.get(danfeUrl, { responseType: 'arraybuffer' });
 
       if (!resp.data || resp.status >= 400) {
