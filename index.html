@@ -524,6 +524,12 @@
                 </button>
                 <div id="logPathInfo" style="margin-top:4px;font-size:11px;color:var(--text-muted);word-break:break-all"></div>
               </div>
+              <div class="card">
+                <h3>Legal</h3>
+                <div class="field"><label class="field-label">Termos de Uso</label><div><a href="#" onclick="window.api.openExternal('https://www.nfsemonitor.com.br/termos-de-uso');return false">Termos referente ao uso do NFS-e Monitor</a></div></div>
+                <div class="field"><label class="field-label">Privacidade</label><div><a href="#" onclick="window.api.openExternal('https://www.nfsemonitor.com.br/privacidade');return false">Politica referente a privacidade dos dados</a></div></div>
+                <div class="field"><label class="field-label">Licenças</label><div><a href="#" onclick="window.api.openExternal('https://www.nfsemonitor.com.br/licencas');return false">Licenças referente as bibliotecas de codigo aberto utilizadas</a></div></div>
+              </div>
             </div>
 
           </div><!-- /cfg-content -->
@@ -673,6 +679,71 @@
     <div class="modal-foot">
       <button class="btn" onclick="closeSyncAllModal()">Cancelar</button>
       <button class="btn primary" id="btnStartSyncAll" onclick="startSyncAll()">Iniciar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Termos de Uso -->
+<div class="overlay hidden" id="termsModal" style="z-index:9999">
+  <div class="modal" style="max-width:480px;text-align:center;padding:32px 28px;border-radius:8px;background:#ffffff;border:1px solid #e5e5e5;box-shadow:0 25px 50px rgba(0,0,0,0.15)">
+    <h3 style="font-size:18px;font-weight:600;color:#1c1c1c;margin-bottom:8px;font-family:'Segoe UI Variable','Segoe UI',sans-serif">Termos de Uso e Privacidade</h3>
+    <p style="font-size:13px;color:#616161;margin-bottom:16px;line-height:1.5">
+      Para continuar usando o NFS-e Monitor, voce precisa ler e concordar com os Termos de Uso e a Politica de Privacidade.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+      <a href="#" onclick="window.api.openExternal('https://www.nfsemonitor.com.br/termos-de-uso');return false">Ler Termos de Uso</a>
+      <a href="#" onclick="window.api.openExternal('https://www.nfsemonitor.com.br/privacidade');return false">Ler Politica de Privacidade</a>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn" id="btnRecusarTermos" onclick="recusarTermos()" style="flex:1;justify-content:center">Não aceito</button>
+      <button class="btn primary" id="btnAceitarTermos" onclick="aceitarTermos()" style="flex:1;justify-content:center;background:linear-gradient(135deg,#0078d4,#106ebe);border:none;color:white">Aceito</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Aviso (download de XML/DANFSe bloqueado) -->
+<div class="overlay hidden" id="avisoModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <h3>⚠️ Aviso importante</h3>
+      <button class="modal-x" onclick="closeAviso()"><svg viewBox="0 0 14 14" fill="currentColor"><path d="M4.646 4.646a.5.5 0 01.708 0L7 6.293l1.646-1.647a.5.5 0 01.708.708L7.707 7l1.647 1.646a.5.5 0 01-.708.708L7 7.707 5.354 9.354a.5.5 0 01-.708-.708L6.293 7 4.646 5.354a.5.5 0 010-.708z"/></svg></button>
+    </div>
+    <div class="modal-body markdown-body" style="max-height:60vh;overflow-y:auto">
+      <p>A partir de hoje (10/06/2026), o portal <strong>nfse.gov.br</strong> passou a exigir a resolução de um captcha real (hCaptcha) para liberar o download de cada XML/DANFSe individualmente. Por causa disso, <strong>o download automático de XML e DANFSe pelo app parou de funcionar</strong>.</p>
+      <h4>O que continua funcionando normalmente</h4>
+      <ul>
+        <li>Login (certificado digital ou senha do portal)</li>
+        <li>Consulta e listagem de notas emitidas e recebidas</li>
+        <li>Dashboard, valores, status (Autorizada/Cancelada/Substituída) e histórico</li>
+        <li>Sincronização automática dos dados das notas</li>
+      </ul>
+      <h4>O que está temporariamente indisponível</h4>
+      <ul>
+        <li>Download automático de XML</li>
+        <li>Download automático de DANFSe (PDF)</li>
+        <li>Funcionalidades que dependem do XML (ex: relatórios detalhados, exportação de XML em lote, reparo de dados)</li>
+      </ul>
+      <h4>O que fazer enquanto isso</h4>
+      <p>Se precisar do XML ou do DANFSe de uma nota específica, baixe manualmente direto pelo portal nfse.gov.br, resolvendo o captcha normalmente.</p>
+    </div>
+    <div class="modal-foot">
+      <div style="flex:1"></div>
+      <button class="btn primary" onclick="closeAviso()">Entendi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Novidades da versao -->
+<div class="overlay hidden" id="whatsNewModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <h3 id="whatsNewTitle">Novidades</h3>
+      <button class="modal-x" onclick="closeWhatsNew()"><svg viewBox="0 0 14 14" fill="currentColor"><path d="M4.646 4.646a.5.5 0 01.708 0L7 6.293l1.646-1.647a.5.5 0 01.708.708L7.707 7l1.647 1.646a.5.5 0 01-.708.708L7 7.707 5.354 9.354a.5.5 0 01-.708-.708L6.293 7 4.646 5.354a.5.5 0 010-.708z"/></svg></button>
+    </div>
+    <div class="modal-body markdown-body" id="whatsNewBody" style="max-height:60vh;overflow-y:auto"></div>
+    <div class="modal-foot">
+      <div style="flex:1"></div>
+      <button class="btn primary" onclick="closeWhatsNew()">Entendi</button>
     </div>
   </div>
 </div>

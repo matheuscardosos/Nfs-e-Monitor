@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { shell } = require('electron');
 const { parsePfxCertificate, formatCnpj } = require('./certificate');
 const { fetchEmitidas, fetchRecebidas, downloadXml, parseXmlDetails, sleep, generate30DayChunks } = require('./nfse-api');
 const { checkPortalStatus } = require('./portal-status');
@@ -1947,6 +1948,67 @@ function setupIpcHandlers(ipcMain, db, getMainWindow, dialog, app) {
   const packageJson = require('../package.json');
   ipcMain.handle('get-app-version', () => {
     return packageJson.version;
+  });
+
+  // --- Termos de uso ---
+  const crypto = require('crypto');
+  const TERMS_VERSION = '1.1';
+  const TERMS_HASH = crypto.createHash('sha256').update('nfse-monitor-terms-v1.1').digest('hex');
+
+  ipcMain.handle('check-terms-accepted', () => {
+    const row = db.prepare('SELECT id FROM terms_acceptance WHERE version = ? AND hash = ? LIMIT 1').get(TERMS_VERSION, TERMS_HASH);
+    return !!row;
+  });
+
+  ipcMain.handle('accept-terms', () => {
+    db.prepare('INSERT INTO terms_acceptance (version, hash) VALUES (?, ?)').run(TERMS_VERSION, TERMS_HASH);
+    return true;
+  });
+
+  ipcMain.handle('quit-app', () => {
+    app.quit();
+  });
+
+  ipcMain.handle('open-external', (event, url) => {
+    try {
+      const u = new URL(url);
+      if (u.protocol === 'http:' || u.protocol === 'https:') {
+        shell.openExternal(url);
+      }
+    } catch (e) { /* url invalida, ignora */ }
+  });
+
+  // --- Novidades da versao (changelog) ---
+  ipcMain.handle('get-whats-new', async () => {
+    const current = packageJson.version;
+    const row = db.prepare("SELECT valor FROM config WHERE chave = 'last_seen_version'").get();
+    const lastSeen = row ? row.valor : null;
+
+    if (lastSeen === current) return null;
+    db.prepare("INSERT OR REPLACE INTO config (chave, valor) VALUES ('last_seen_version', ?)").run(current);
+
+    // Primeira execucao (sem versao anterior registrada): so registra, nao mostra
+    if (!lastSeen) return null;
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/matheuscardosos/Nfs-e-Monitor/releases/tags/v${current}`);
+      if (!res.ok) return null;
+      const json = await res.json();
+      return { version: current, name: json.name, body: json.body, htmlUrl: json.html_url };
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // --- Aviso pontual (download de XML/DANFSe bloqueado) ---
+  ipcMain.handle('check-aviso-seen', () => {
+    const row = db.prepare("SELECT valor FROM config WHERE chave = 'aviso_captcha_2026_06'").get();
+    return !!row;
+  });
+
+  ipcMain.handle('mark-aviso-seen', () => {
+    db.prepare("INSERT OR REPLACE INTO config (chave, valor) VALUES ('aviso_captcha_2026_06', '1')").run();
+    return true;
   });
 }
 

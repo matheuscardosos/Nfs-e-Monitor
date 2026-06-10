@@ -178,6 +178,79 @@ function certSt(c) {
   return { cls: 'ok', text: 'Valido', svg: SVG_CERT_OK };
 }
 
+// ── Termos de uso ──
+async function checkTerms() {
+  const accepted = await window.api.checkTermsAccepted();
+  if (!accepted) document.getElementById('termsModal').classList.remove('hidden');
+  else { await checkAviso(); checkWhatsNew(); }
+}
+
+async function aceitarTermos() {
+  await window.api.acceptTerms();
+  document.getElementById('termsModal').classList.add('hidden');
+  await checkAviso();
+  checkWhatsNew();
+}
+
+// ── Aviso pontual ──
+function closeAviso() {
+  document.getElementById('avisoModal').classList.add('hidden');
+  window.api.markAvisoSeen();
+}
+
+async function checkAviso() {
+  const seen = await window.api.checkAvisoSeen();
+  if (!seen) document.getElementById('avisoModal').classList.remove('hidden');
+}
+
+async function recusarTermos() {
+  await showAlert('Voce precisa aceitar os Termos de Uso e a Politica de Privacidade para usar o NFS-e Monitor. O aplicativo sera fechado. Para nao ver esta mensagem novamente, desinstale o programa.');
+  window.api.quitApp();
+}
+
+// ── Novidades da versao ──
+function inlineMd(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="#" onclick="window.api.openExternal(\'$2\');return false">$1</a>');
+}
+
+function renderMarkdown(md) {
+  if (!md) return '';
+  const escape = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const lines = md.replace(/\r\n/g, '\n').split('\n');
+  let html = '', inList = false;
+  for (let line of lines) {
+    line = line.trim();
+    if (/^[-*]\s+/.test(line)) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += '<li>' + inlineMd(escape(line.replace(/^[-*]\s+/, ''))) + '</li>';
+      continue;
+    }
+    if (inList) { html += '</ul>'; inList = false; }
+    if (line === '') continue;
+    if (/^### /.test(line)) { html += '<h4>' + inlineMd(escape(line.slice(4))) + '</h4>'; continue; }
+    if (/^## /.test(line)) { html += '<h3>' + inlineMd(escape(line.slice(3))) + '</h3>'; continue; }
+    if (/^# /.test(line)) { html += '<h2>' + inlineMd(escape(line.slice(2))) + '</h2>'; continue; }
+    html += '<p>' + inlineMd(escape(line)) + '</p>';
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+
+function closeWhatsNew() {
+  document.getElementById('whatsNewModal').classList.add('hidden');
+}
+
+async function checkWhatsNew() {
+  const data = await window.api.getWhatsNew();
+  if (!data) return;
+  document.getElementById('whatsNewTitle').textContent = data.name || ('Novidades da versão ' + data.version);
+  document.getElementById('whatsNewBody').innerHTML = renderMarkdown(data.body) || '<p>Confira as novidades desta versão.</p>';
+  document.getElementById('whatsNewModal').classList.remove('hidden');
+}
+
 // ── Inicializacao ──
 async function init() {
   empresas = await window.api.getEmpresas();
@@ -1173,6 +1246,7 @@ async function downloadXmlZipRec() {
 }
 
 // ── Inicializacao ──
+checkTerms();
 init();
 loadAutoSyncConfig();
 // Carrega contagem de alertas ao iniciar (mesmo filtro de loadAlertas)

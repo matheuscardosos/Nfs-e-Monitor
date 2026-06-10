@@ -23,184 +23,159 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="https://www.electronjs.org/">
-    <img src="https://img.shields.io/badge/Electron-191970?style=flat-square&logo=Electron&logoColor=white" alt="Electron">
-  </a>
-  <a href="https://nodejs.org/">
-    <img src="https://img.shields.io/badge/Node.js-43853D?style=flat-square&logo=node.js&logoColor=white" alt="Node.js">
-  </a>
-  <a href="https://www.sqlite.org/">
-    <img src="https://img.shields.io/badge/SQLite-07405E?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite">
-  </a>
-</p>
-
 ---
 
 > **Aviso (03/06/2026):** O portal NFS-e Nacional implementou hCaptcha nos endpoints de download de XML e DANFSe. O problema foi corrigido na **v1.5.4** com a identificação de uma rota alternativa que não exige validação humana. Os downloads voltam a funcionar normalmente. Existe risco de que o portal passe a exigir token real nessa rota em versões futuras — se isso acontecer, os downloads voltarão a falhar e uma nova correção será necessária. O acompanhamento está na issue [#1](https://github.com/matheuscardosos/Nfs-e-Monitor/issues/1).
 
 ---
 
-## <img src="assets/prancheta.svg" width="18" height="18" style="vertical-align:middle"> Sobre
+## Índice
 
-O **NFS-e Monitor** é uma aplicação desktop desenvolvida especificamente para **escritórios de contabilidade de pequeno e médio porte** que precisam gerenciar eficientemente as Notas Fiscais de Serviço Eletrônicas (NFS-e) emitidas por seus clientes no portal NFS-e Nacional.
-
-O sistema elimina a necessidade de acessar individualmente o portal para cada cliente, centralizando todas as informações em uma interface única, intuitiva e otimizada para a rotina contábil.
-
----
-
-## <img src="assets/foguete.svg" width="18" height="18" style="vertical-align:middle"> Funcionalidades
-
-<table>
-<tr>
-<td width="50%">
-
-### <img src="assets/grafico-barras.svg" width="18" height="18" style="vertical-align:middle"> Dashboard Analítico
-- Visualização consolidada de notas por empresa
-- Indicadores de valor total, autorizadas, canceladas e substituídas
-- Filtros por competência, período e status
-- Gráficos e métricas em tempo real
-
-### <img src="assets/pasta.svg" width="18" height="18" style="vertical-align:middle"> Gestão de Empresas
-- Cadastro ilimitado de clientes
-- Autenticação via certificado digital (A1) ou senha do portal
-- Identificação visual por cores
-- Alertas de vencimento de certificado
-
-</td>
-<td width="50%">
-
-### <img src="assets/refresh.svg" width="18" height="18" style="vertical-align:middle"> Sincronização Automática
-- Sincronização manual ou automática (agendada)
-- Download automático de XMLs
-- Atualização de status em tempo real
-- Suporte a múltiplas empresas simultaneamente
-
-### <img src="assets/grafico-subindo.svg" width="18" height="18" style="vertical-align:middle"> Relatórios e Exportações
-- Relatórios PDF por competência
-- Exportação Excel completa
-- Identificação de divergências de competência
-- DANFSE e XML individual ou em lote
-
-</td>
-</tr>
-</table>
+- [Sobre o projeto](#sobre-o-projeto)
+- [Para usuários finais](#para-usuários-finais)
+- [Para contribuidores](#para-contribuidores)
+  - [Pré-requisitos](#pré-requisitos)
+  - [Rodar localmente](#rodar-localmente)
+  - [Estrutura do projeto](#estrutura-do-projeto)
+  - [Commitar mudanças](#commitar-mudanças)
+  - [Gerar banners do instalador](#gerar-banners-do-instalador)
+  - [Criar uma tag de release](#criar-uma-tag-de-release)
+- [Licença](#licença)
 
 ---
 
-## 📥 Instalação
+## Sobre o projeto
 
-### Requisitos
-- Windows 10 ou superior (64-bit)
-- Certificado digital A1 (opcional, alternativa: senha do portal)
-
-### Download
-Acesse a [página de releases](https://github.com/matheuscardosos/Nfs-e-Monitor/releases) e baixe a versão mais recente:
-
-```
-NFS-e-Monitor-Setup-X.X.X.exe
-```
-
-### Instalação Rápida
-1. Execute o instalador baixado
-2. Siga o assistente de instalação
-3. Atalhos serão criados automaticamente na área de trabalho e menu iniciar
-4. Pronto para usar
+O **NFS-e Monitor** é uma aplicação desktop para Windows que centraliza a gestão de Notas Fiscais de Serviço Eletrônicas (NFS-e) do portal NFS-e Nacional. Desenvolvida para escritórios de contabilidade que precisam gerenciar múltiplos clientes sem acessar o portal individualmente para cada um.
 
 ---
 
-## <img src="assets/monitor.svg" width="18" height="18" style="vertical-align:middle"> Primeiros Passos
+## Para usuários finais
 
-### 1. Adicionar uma Empresa
-```
-Menu Empresas → Nova Empresa
-```
-- Escolha o método de autenticação (Certificado ou Senha)
-- Informe os dados de acesso
-- O sistema buscará automaticamente os dados da empresa
-
-### 2. Sincronizar Notas
-```
-Selecione a empresa → Ícone de sincronização
-```
-- Defina o período desejado
-- Aguarde a conclusão da sincronização
-- As notas aparecerão automaticamente no dashboard
-
-### 3. Gerar Relatórios
-```
-Dashboard → Botão "Gerar Relatório"
-```
-- Exporte para Excel ou PDF
-- Filtre por período, status ou competência
+Acesse a [página de releases](https://github.com/matheuscardosos/Nfs-e-Monitor/releases) e baixe o instalador `NFS-e-Monitor-Setup-X.X.X.exe`. Execute e siga o assistente. O programa se atualiza automaticamente quando novas versões são publicadas.
 
 ---
 
-## <img src="assets/construcao.svg" width="18" height="18" style="vertical-align:middle"> Arquitetura
+## Para contribuidores
 
-O sistema foi desenvolvido com tecnologias modernas e robustas:
+### Pré-requisitos
 
-| Componente | Tecnologia | Propósito |
-|------------|------------|-----------|
-| Framework | [Electron](https://www.electronjs.org/) | Aplicação desktop multiplataforma |
-| Runtime | [Node.js](https://nodejs.org/) | Execução JavaScript server-side |
-| Database | [SQLite](https://www.sqlite.org/) | Armazenamento local estruturado |
-| PDF Engine | Electron `printToPDF` | Geração de relatórios PDF |
-| Excel Export | [ExcelJS](https://github.com/exceljs/exceljs) | Exportação de planilhas |
-| Crypto | [node-forge](https://github.com/digitalbazaar/forge) | Processamento de certificados |
-| HTTP Client | [axios](https://axios-http.com/) | Integração com APIs |
+- [Node.js](https://nodejs.org/) v18 ou superior
+- npm (incluído com o Node.js)
+- Git
+- Windows (o projeto só compila para Windows)
+
+### Rodar localmente
+
+```bash
+# 1. Clonar o repositório
+git clone https://github.com/matheuscardosos/Nfs-e-Monitor.git
+cd Nfs-e-Monitor
+
+# 2. Instalar dependências
+npm install
+
+# 3. Iniciar em modo desenvolvimento
+npm start
+```
+
+> O banco de dados SQLite é criado automaticamente em `%APPDATA%\NFS-e Monitor\nfse-manager.db` na primeira execução.
+
+### Estrutura do projeto
+
+```
+nfse-manager/
+├── main.js                  # Processo principal Electron (janelas, tray, auto-update)
+├── preload.js               # Ponte segura entre main e renderer (contextBridge)
+├── index.html               # Interface principal do app
+├── renderer/
+│   ├── app.js               # Lógica do renderer (toda interação com a UI)
+│   └── styles.css           # Estilos da interface
+├── services/
+│   ├── database.js          # Inicialização e acesso ao banco SQLite (sql.js)
+│   ├── ipc-handlers.js      # Todos os handlers IPC do processo principal
+│   ├── nfse-api.js          # Integração com a API do portal NFS-e Nacional
+│   ├── certificate.js       # Leitura e parsing de certificados A1 (PFX)
+│   ├── portal-status.js     # Verificação de status do portal
+│   └── pdf-report.js        # Geração de relatórios PDF
+├── scripts/
+│   └── generate-banners.js  # Gera os banners BMP usados no instalador NSIS
+├── assets/                  # Ícones SVG usados na interface
+└── build/                   # Recursos do instalador (ícone, banners BMP)
+```
+
+### Commitar mudanças
+
+Use mensagens de commit em português, no imperativo, sem ponto final:
+
+```bash
+git add <arquivos>
+git commit -m "Corrige download de XML quando hCaptcha ativo"
+git push origin main
+```
+
+Convenções de prefixo (recomendadas, não obrigatórias):
+
+| Prefixo | Quando usar |
+|---------|-------------|
+| `Corrige` | Bug fix |
+| `Adiciona` | Nova funcionalidade |
+| `Atualiza` | Melhoria em algo existente |
+| `Remove` | Remoção de código ou recurso |
+| `Refatora` | Mudança interna sem impacto no comportamento |
+
+### Gerar banners do instalador
+
+Os banners BMP do instalador NSIS (`installerHeader.bmp`, `installerSidebar.bmp`, etc.) são gerados automaticamente a partir do ícone do projeto e da versão atual do `package.json`.
+
+Execute **antes de buildar**:
+
+```bash
+npm run generate-banners
+# ou diretamente:
+node scripts/generate-banners.js
+```
+
+Os arquivos são gravados em `build/`. Não edite os BMPs manualmente — eles serão sobrescritos na próxima geração.
+
+### Criar uma tag de release
+
+1. Atualize a versão em `package.json`:
+   ```bash
+   # Edite o campo "version" em package.json, ex: "1.5.5"
+   ```
+
+2. Gere os banners com a nova versão:
+   ```bash
+   node scripts/generate-banners.js
+   ```
+
+3. Commit e tag:
+   ```bash
+   git add package.json build/
+   git commit -m "Versao 1.5.5"
+   git tag v1.5.5
+   git push origin main --tags
+   ```
+
+4. O GitHub Actions (se configurado) faz o build e publica o release automaticamente. Caso contrário, buildar manualmente:
+   ```bash
+   npm run build
+   # Instalador gerado em dist/NFS-e-Monitor-Setup-X.X.X.exe
+   ```
 
 ---
 
-## <img src="assets/cadeado.svg" width="18" height="18" style="vertical-align:middle"> Segurança e Privacidade
+## Licença
 
-### Armazenamento Local
-- <img src="assets/check.svg" width="18" height="18" style="vertical-align:middle"> Todos os dados são armazenados **exclusivamente no computador local**
-- <img src="assets/check.svg" width="18" height="18" style="vertical-align:middle"> Nenhuma informação é transmitida ou armazenada em servidores externos
-- <img src="assets/check.svg" width="18" height="18" style="vertical-align:middle"> Banco de dados SQLite criptografado localmente
-- <img src="assets/check.svg" width="18" height="18" style="vertical-align:middle"> Credenciais processadas apenas em memória
+**AGPL-3.0** © 2026 Matheus Cardoso Soares
 
-### Responsabilidades do Usuário
-O usuário é responsável por:
-- Manter o ambiente de rede seguro e isolado
-- Realizar backups regulares dos dados
-- Proteger arquivos de certificados digitais
-- Manter sistema operacional e antivírus atualizados
+Este software é distribuído sob a [GNU Affero General Public License v3.0](LICENSE). Qualquer redistribuição ou versão modificada deve ser disponibilizada sob a mesma licença com o código-fonte completo.
 
-> **Aviso Legal**: O funcionamento depende da disponibilidade e estabilidade do portal NFS-e Nacional. Não há garantia de compatibilidade futura com alterações no sistema oficial. O software é fornecido no estado atual, sem garantias explícitas ou implícitas de qualquer natureza.
-
----
-
-## <img src="assets/prancheta.svg" width="18" height="18" style="vertical-align:middle"> Requisitos do Sistema
-
-| Especificação | Mínimo | Recomendado |
-|---------------|--------|-------------|
-| Sistema Operacional | Windows 10 | Windows 11 |
-| Arquitetura | 64-bit | 64-bit |
-| Memória RAM | 4 GB | 8 GB |
-| Espaço em Disco | 500 MB | 2 GB |
-| Conectividade | Internet 2 Mbps | Internet 10 Mbps |
-
----
-
-## <img src="assets/bug.svg" width="18" height="18" style="vertical-align:middle"> Suporte e Contribuições
-
-### Reportar Problemas
-Encontrou um bug ou tem uma sugestão? Abra uma issue em nosso [repositório GitHub](https://github.com/matheuscardosos/Nfs-e-Monitor/issues).
-
-### Atualizações
-O sistema inclui atualização automática. Quando uma nova versão estiver disponível, você será notificado e poderá instalar com um clique.
-
----
-
-## <img src="assets/documento.svg" width="18" height="18" style="vertical-align:middle"> Licença
-
-**AGPL-3.0** © 2026 Matheus Cardoso
-
-> Este software é distribuído sob a [GNU Affero General Public License v3.0](LICENSE). Consulte o arquivo [LICENSE](LICENSE) para os termos completos de uso.
+Consulte também: [Termos de Uso](https://www.nfsemonitor.com.br/termos-de-uso) · [Privacidade](https://www.nfsemonitor.com.br/privacidade) · [Licenças de código aberto](https://www.nfsemonitor.com.br/licencas)
 
 ---
 
 <p align="center">
-  <sub>Projeto mantido por <a href="https://github.com/matheuscardosos">Matheus Cardoso</a></sub>
+  <sub>Mantido por <a href="https://github.com/matheuscardosos">Matheus Cardoso Soares</a></sub>
 </p>

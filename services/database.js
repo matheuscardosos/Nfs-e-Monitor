@@ -204,6 +204,13 @@ async function initDatabase(userDataPath) {
       failed INTEGER
     );
     CREATE INDEX IF NOT EXISTS idx_psh_checked_at ON portal_status_history(checked_at);
+
+    CREATE TABLE IF NOT EXISTS terms_acceptance (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      version TEXT NOT NULL,
+      hash TEXT NOT NULL,
+      accepted_at TEXT DEFAULT (datetime('now','localtime'))
+    );
   `);
 
   // Defaults de notificacoes

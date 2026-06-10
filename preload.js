@@ -87,4 +87,17 @@ contextBridge.exposeInMainWorld('api', {
   // Configuracao de notificacoes
   getNotifConfig: () => ipcRenderer.invoke('get-notif-config'),
   setNotifConfig: (key, value) => ipcRenderer.invoke('set-notif-config', key, value),
+
+  // Termos de uso
+  checkTermsAccepted: () => ipcRenderer.invoke('check-terms-accepted'),
+  acceptTerms: () => ipcRenderer.invoke('accept-terms'),
+  quitApp: () => ipcRenderer.invoke('quit-app'),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
+
+  // Novidades da versao
+  getWhatsNew: () => ipcRenderer.invoke('get-whats-new'),
+
+  // Aviso pontual
+  checkAvisoSeen: () => ipcRenderer.invoke('check-aviso-seen'),
+  markAvisoSeen: () => ipcRenderer.invoke('mark-aviso-seen'),
 });
