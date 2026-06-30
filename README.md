@@ -26,7 +26,7 @@
 ---
 
 > **Aviso (03/06/2026):** O portal NFS-e Nacional implementou hCaptcha nos endpoints de download de XML e DANFSe. O problema foi corrigido na **v1.5.4** com a identificação de uma rota alternativa que não exige validação humana. Os downloads voltam a funcionar normalmente. Existe risco de que o portal passe a exigir token real nessa rota em versões futuras — se isso acontecer, os downloads voltarão a falhar e uma nova correção será necessária. O acompanhamento está na issue [#1](https://github.com/matheuscardosos/Nfs-e-Monitor/issues/1).
-> O projeto está passando por uma grande reestruturação devida as varias mudanças ocorridas. Provavelmente estarei disponibilizando novamente a partir de hoje. Porém, provavelmente haverá diversos bugs.
+> O projeto está passando por uma grande reestruturação devido as varias mudanças ocorridas. Provavelmente estarei disponibilizando novamente a partir de hoje. Porém, provavelmente haverá alguns bugs a serem corrigidos.
 
 ---
 
